@@ -5,7 +5,7 @@ from dynamixel_controller import DynamixelController
 
 ROBOT_HOME = 1030
 DISPENSE_STEP = 1024
-TIMEOUT = 1_000
+TIMEOUT_SECONDS = 1
 
 PORT = "COM8"
 BAUDRATE = 57600
@@ -25,12 +25,19 @@ def dispense(motor_controller: DynamixelController, motor_id: int, current_posit
         current_position += DISPENSE_STEP
         motor_controller.write(motor_id, control_table.GOAL_POSITION, current_position)
         time.sleep(0.1)
-        for _ in range(TIMEOUT):
+
+        success = False
+        reference = time.time()
+        while time.time() - reference < TIMEOUT_SECONDS:
             moving = motor_controller.read(MOTOR_ID, control_table.MOVING)
             if moving == 0:
+                success = True
                 break
-            time.sleep(0.1)
-        return current_position  # INTERLOCK to wait until movement is done
+            time.sleep(0.01)
+        if success:
+            return current_position  # INTERLOCK to wait until movement is done
+        else:
+            raise TimeoutError
         
 
 
