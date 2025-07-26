@@ -1,5 +1,6 @@
 from typing import Tuple, Union
-from dynamixel_sdk import PortHandler, PacketHandler, COMM_SUCCESS
+
+from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler
 
 
 class DynamixelController:
@@ -131,8 +132,7 @@ class DynamixelController:
         self.port_handler.closePort()
 
 
-# Example usage
-if __name__ == "__main__":
+def main() -> None:
     controller = DynamixelController("/dev/ttyUSB0", 57600, 2.0)
     try:
         # Example: Enable torque (address and length depend on motor model)
@@ -143,3 +143,8 @@ if __name__ == "__main__":
         print(f"Error: {e}")
     finally:
         controller.close_port()
+
+
+# Example usage
+if __name__ == "__main__":
+    main()
