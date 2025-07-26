@@ -57,6 +57,7 @@ def dispense(
         time.sleep(0.1)
         if not poll_motor_for_moving(motor_controller, motor_id):
             raise DispenserError(f"Dispense error at motor {motor_id}")
+    return current_position
 
 
 def main() -> None:
@@ -86,11 +87,11 @@ def main() -> None:
         if qty.lower() == "q":
             break
         try:
-            qty = int(qty)  # number of steps to dispense
+            qty_int = int(qty)  # number of steps to dispense
+            current_position = dispense(motor_controller, MOTOR_ID, current_position, qty_int)
         except ValueError:
             print(f"Invalid input {qty}, please enter an integer or 'q' to quit.")
             continue
-        current_position = dispense(motor_controller, MOTOR_ID, current_position, qty)
 
 
 if __name__ == "__main__":
