@@ -1,9 +1,9 @@
 import time
 
-import control_table
-from dynamixel_controller import DynamixelController
-
 from errors import DispenserError
+
+from . import control_table
+from .dynamixel_controller import DynamixelController
 
 ROBOT_HOME = 1030
 DISPENSE_STEP = 1024
