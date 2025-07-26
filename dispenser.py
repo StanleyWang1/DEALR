@@ -92,6 +92,8 @@ def main() -> None:
         except ValueError:
             print(f"Invalid input {qty}, please enter an integer or 'q' to quit.")
             continue
+        except DispenserError as e:
+            raise e
 
 
 if __name__ == "__main__":
