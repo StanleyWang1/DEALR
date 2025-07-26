@@ -8,3 +8,10 @@ dependencies = [
     "dynamixel-controller>=0.9.2",
     "dynamixel-sdk>=3.7.31",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.5",
+]
