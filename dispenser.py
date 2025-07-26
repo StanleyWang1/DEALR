@@ -25,6 +25,9 @@ def home(motor_controller: DynamixelController, motor_id: int) -> int:
 
     Returns:
         int: Home position code.
+    
+    Raises:
+        DispenserError: If the motor stalls.
     """
 
     motor_controller.write(motor_id, control_table.GOAL_POSITION, ROBOT_HOME)
@@ -34,6 +37,15 @@ def home(motor_controller: DynamixelController, motor_id: int) -> int:
 
 
 def poll_motor_for_moving(motor_controller: DynamixelController, motor_id: int) -> bool:
+    """Polls the motor to see if it is moving within the timeout window.
+
+    Args:
+        motor_controller: Master motor network.
+        motor_id: Motor ID.
+
+    Returns:
+        bool: If the motor has successfully completed movement.
+    """
     success = False
     reference = time.time()
     while time.time() - reference < TIMEOUT_SECONDS:
@@ -49,9 +61,24 @@ def dispense(
     motor_controller: DynamixelController,
     motor_id: int,
     current_position: int,
-    qty: int,
+    quantity: int,
 ) -> int:
-    for _ in range(qty):
+    """Continuously moves the motor to dispense N chips.
+
+    Args:
+        motor_controller: Master motor network.
+        motor_id: Motor ID.
+        current_position: Current encoded position of motor.
+        quantity: Number of movements to make.
+
+    Raises:
+        DispenserError: If the motor stalls.
+
+    Returns:
+        int: New current position.
+    """
+
+    for _ in range(quantity):
         current_position += DISPENSE_STEP
         motor_controller.write(motor_id, control_table.GOAL_POSITION, current_position)
         time.sleep(0.1)
@@ -61,6 +88,8 @@ def dispense(
 
 
 def main() -> None:
+    """Dispenser motor driver."""
+
     motor_controller = DynamixelController(PORT, BAUDRATE, PROTOCOL_VERSION)
     motor_controller.packet_handler.reboot(
         motor_controller.port_handler, MOTOR_ID
