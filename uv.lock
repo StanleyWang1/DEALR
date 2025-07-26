@@ -16,6 +16,7 @@ name = "dealr"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "colorama" },
     { name = "dynamixel-controller" },
     { name = "dynamixel-sdk" },
 ]
@@ -29,6 +30,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "colorama", specifier = ">=0.4.6" },
     { name = "dynamixel-controller", specifier = ">=0.9.2" },
     { name = "dynamixel-sdk", specifier = ">=3.7.31" },
 ]

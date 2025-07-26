@@ -3,6 +3,8 @@ import time
 import control_table
 from dynamixel_controller import DynamixelController
 
+from errors import DispenserError
+
 ROBOT_HOME = 1030
 DISPENSE_STEP = 1024
 TIMEOUT_SECONDS = 1
@@ -15,30 +17,46 @@ PROTOCOL_VERSION = 2.0
 
 
 def home(motor_controller: DynamixelController, motor_id: int) -> int:
+    """Resets the motor controller to home position.
+
+    Args:
+        motor_controller: Master motor network.
+        motor_id: Specific motor ID.
+
+    Returns:
+        int: Home position code.
+    """
+
     motor_controller.write(motor_id, control_table.GOAL_POSITION, ROBOT_HOME)
-    time.sleep(1)
+    if not poll_motor_for_moving(motor_controller, motor_id):
+        raise DispenserError(f"Homing error at motor {motor_id}")
     return ROBOT_HOME
 
 
-def dispense(motor_controller: DynamixelController, motor_id: int, current_position: int, qty: int) -> int:
+def poll_motor_for_moving(motor_controller: DynamixelController, motor_id: int) -> bool:
+    success = False
+    reference = time.time()
+    while time.time() - reference < TIMEOUT_SECONDS:
+        moving = motor_controller.read(motor_id, control_table.MOVING)
+        if moving == 0:
+            success = True
+            break
+        time.sleep(0.01)
+    return success
+
+
+def dispense(
+    motor_controller: DynamixelController,
+    motor_id: int,
+    current_position: int,
+    qty: int,
+) -> int:
     for _ in range(qty):
         current_position += DISPENSE_STEP
         motor_controller.write(motor_id, control_table.GOAL_POSITION, current_position)
         time.sleep(0.1)
-
-        success = False
-        reference = time.time()
-        while time.time() - reference < TIMEOUT_SECONDS:
-            moving = motor_controller.read(MOTOR_ID, control_table.MOVING)
-            if moving == 0:
-                success = True
-                break
-            time.sleep(0.01)
-        if success:
-            return current_position  # INTERLOCK to wait until movement is done
-        else:
-            raise TimeoutError
-        
+        if not poll_motor_for_moving(motor_controller, motor_id):
+            raise DispenserError(f"Dispense error at motor {motor_id}")
 
 
 def main() -> None:
