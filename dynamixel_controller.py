@@ -1,5 +1,6 @@
 from typing import Tuple, Union
-from dynamixel_sdk import PortHandler, PacketHandler, COMM_SUCCESS
+
+from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler
 
 
 class DynamixelController:
@@ -7,7 +8,9 @@ class DynamixelController:
     A class to control Dynamixel motors using the Dynamixel SDK.
     """
 
-    def __init__(self, device_name: str, baudrate: int, protocol_version: float) -> None:
+    def __init__(
+        self, device_name: str, baudrate: int, protocol_version: float
+    ) -> None:
         """
         Initializes the DynamixelController class.
 
@@ -37,7 +40,9 @@ class DynamixelController:
         if not self.port_handler.setBaudRate(self.baudrate):
             raise RuntimeError("Failed to change the baudrate")
 
-    def write(self, dxl_id: int, command_type: Tuple[int, int], command_value: int) -> bool:
+    def write(
+        self, dxl_id: int, command_type: Tuple[int, int], command_value: int
+    ) -> bool:
         """
         Writes a value for a specified type of command to a specific motor ID.
 
@@ -67,12 +72,16 @@ class DynamixelController:
             return False
 
         if dxl_comm_result != COMM_SUCCESS:
-            print(f"Communication error on motor {dxl_id}: "
-                  f"{self.packet_handler.getTxRxResult(dxl_comm_result)}")
+            print(
+                f"Communication error on motor {dxl_id}: "
+                f"{self.packet_handler.getTxRxResult(dxl_comm_result)}"
+            )
             return False
         if dxl_error != 0:
-            print(f"Packet error on motor {dxl_id}: "
-                  f"{self.packet_handler.getRxPacketError(dxl_error)}")
+            print(
+                f"Packet error on motor {dxl_id}: "
+                f"{self.packet_handler.getRxPacketError(dxl_error)}"
+            )
             return False
         return True
 
@@ -105,12 +114,16 @@ class DynamixelController:
             return False
 
         if dxl_comm_result != COMM_SUCCESS:
-            print(f"Communication error on motor {dxl_id}: "
-                  f"{self.packet_handler.getTxRxResult(dxl_comm_result)}")
+            print(
+                f"Communication error on motor {dxl_id}: "
+                f"{self.packet_handler.getTxRxResult(dxl_comm_result)}"
+            )
             return False
         if dxl_error != 0:
-            print(f"Packet error on motor {dxl_id}: "
-                  f"{self.packet_handler.getRxPacketError(dxl_error)}")
+            print(
+                f"Packet error on motor {dxl_id}: "
+                f"{self.packet_handler.getRxPacketError(dxl_error)}"
+            )
             return False
         return dxl_value
 
@@ -119,9 +132,8 @@ class DynamixelController:
         self.port_handler.closePort()
 
 
-# Example usage
-if __name__ == "__main__":
-    controller = DynamixelController('/dev/ttyUSB0', 57600, 2.0)
+def main() -> None:
+    controller = DynamixelController("/dev/ttyUSB0", 57600, 2.0)
     try:
         # Example: Enable torque (address and length depend on motor model)
         controller.write(1, (64, 1), 1)
@@ -131,3 +143,8 @@ if __name__ == "__main__":
         print(f"Error: {e}")
     finally:
         controller.close_port()
+
+
+# Example usage
+if __name__ == "__main__":
+    main()
