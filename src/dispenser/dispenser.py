@@ -1,6 +1,6 @@
 import time
 
-from errors import DispenserError
+from .errors import DispenserError
 
 from . import control_table
 from .dynamixel_controller import DynamixelController
