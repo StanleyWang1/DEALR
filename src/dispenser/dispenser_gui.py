@@ -6,15 +6,15 @@ from tkinter import ttk
 from .dispenser_core import ALLOWED_TRANSITIONS, Dispenser, DispenserState
 
 
-def start_gui(dispenser: "Dispenser"):
+def start_gui(dispenser: Dispenser):
     """Launch a GUI to control the dispenser."""
 
     def update_gui():
-        chip_label.config(text=f"Chips: {dispenser.get_chip_count()}")
-        state_label.config(text=f"State: {dispenser.get_state().name}")
+        chip_label.config(text=f"Chips: {dispenser.chip_count}")
+        state_label.config(text=f"State: {dispenser.state.name}")
 
         # ✅ Enable/disable buttons based on valid transitions
-        state = dispenser.get_state()
+        state = dispenser.state
         allowed = ALLOWED_TRANSITIONS.get(state, [])
 
         btn_dispense.config(
@@ -42,13 +42,13 @@ def start_gui(dispenser: "Dispenser"):
             logging.warning("Invalid dispense quantity.")
             return
 
-        if qty <= dispenser.get_chip_count():
+        if qty <= dispenser.chip_count:
             run_in_thread(lambda: dispenser.dispense(qty))
-            logging.info("Dispensed %d chips.", qty)
+            logging.info(f"Dispensed {qty} chips.")
             qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
         else:
             logging.warning(
-                "Only %d chips available. Please load more.", dispenser.get_chip_count()
+                f"Only {dispenser.chip_count} chips available. Please load more."
             )
 
     def on_load():
@@ -59,7 +59,7 @@ def start_gui(dispenser: "Dispenser"):
             return
 
         run_in_thread(lambda: dispenser.load(qty))
-        logging.info("Loading %d chips...", qty)
+        logging.info(f"Loading {qty} chips...")
         qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
 
     def on_home():
@@ -110,3 +110,8 @@ def start_gui(dispenser: "Dispenser"):
 
     update_gui()
     root.mainloop()
+
+
+if __name__ == "__main__":
+    dispenser: Dispenser = ...
+    start_gui(dispenser)

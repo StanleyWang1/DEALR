@@ -47,23 +47,37 @@ class Dispenser:
 
     def __init__(self, motor_controller: DynamixelController, motor_id: int) -> None:
         """Initialize a Dispenser instance."""
+
         self.motor_controller = motor_controller
         self.motor_id = motor_id
-        self.chip_count = 0
-        self.state = DispenserState.OFF
+        self._chip_count = 0
+        self._state = DispenserState.OFF
         self.current_position = 0
 
+    @property
+    def state(self) -> DispenserState:
+        """Return the current state."""
+        return self._state
+
+    @state.setter
     def set_state(self, new_state: DispenserState) -> bool:
         """Attempt to change state; return True if allowed."""
+
         allowed = ALLOWED_TRANSITIONS.get(self.state, [])
         if new_state not in allowed:
             logging.warning(f"Invalid transition: {self.state.name} → {new_state.name}")
             return False
-        self.state = new_state
+        self._state = new_state
         return True
+
+    @property
+    def chip_count(self) -> int:
+        """Return the chip count."""
+        return self._chip_count
 
     def _interlock_motion(self) -> bool:
         """Wait until motion completes or timeout expires."""
+
         start_time = time.time()
         while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
             if self.motor_controller.read(self.motor_id, control_table.MOVING) == 0:
@@ -73,6 +87,7 @@ class Dispenser:
 
     def home(self) -> None:
         """Move the motor to the home position."""
+
         if not self.set_state(DispenserState.HOMING):
             return
         self.motor_controller.write(
@@ -89,6 +104,7 @@ class Dispenser:
 
     def dispense(self, quantity: int) -> None:
         """Dispense a given number of chips."""
+
         if not self.set_state(DispenserState.DISPENSING):
             return
         if self.chip_count < quantity:
@@ -114,6 +130,7 @@ class Dispenser:
 
     def load(self, quantity: int) -> None:
         """Load chips into the dispenser."""
+
         if not self.set_state(DispenserState.LOADING):
             return
         if (
@@ -133,6 +150,7 @@ class Dispenser:
 
     def initialize_motor(self, velocity: int = 300, acceleration: int = 30) -> None:
         """Reboot and configure the motor."""
+
         if not self.set_state(DispenserState.ON):
             return
         try:
@@ -151,11 +169,3 @@ class Dispenser:
         except Exception as e:
             logging.warning(f"Failed to initialize motor {self.motor_id}: {e}")
             self.set_state(DispenserState.ERROR)
-
-    def get_state(self) -> DispenserState:
-        """Return the current state."""
-        return self.state
-
-    def get_chip_count(self) -> int:
-        """Return the chip count."""
-        return self.chip_count
