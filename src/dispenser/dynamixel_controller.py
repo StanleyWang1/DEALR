@@ -1,6 +1,6 @@
 from typing import Tuple, Union
 
-from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler
+from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler  # type: ignore
 
 
 class DynamixelController:

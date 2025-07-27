@@ -1,7 +1,7 @@
 """Card detection driver."""
 from pathlib import Path
 
-from ultralytics import YOLO
+from ultralytics import YOLO  # type: ignore
 
 def main() -> None:
     # Load a model
