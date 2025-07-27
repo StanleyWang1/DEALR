@@ -57,9 +57,7 @@ class Dispenser:
         """Attempt to change state; return True if allowed."""
         allowed = ALLOWED_TRANSITIONS.get(self.state, [])
         if new_state not in allowed:
-            logging.warning(
-                "Invalid transition: %s → %s", self.state.name, new_state.name
-            )
+            logging.warning(f"Invalid transition: {self.state.name} → {new_state.name}")
             return False
         self.state = new_state
         return True
@@ -84,7 +82,7 @@ class Dispenser:
         )
         if not self._interlock_motion():
             self.set_state(DispenserState.ERROR)
-            logging.error("Homing motion error at motor %d", self.motor_id)
+            logging.error(f"Homing motion error at motor {self.motor_id}")
             return
         self.current_position = control_table.MOTOR_HOMES[self.motor_id]
         self.set_state(DispenserState.IDLE)
@@ -95,9 +93,7 @@ class Dispenser:
             return
         if self.chip_count < quantity:
             logging.warning(
-                "Not enough chips to dispense %d. Only %d available.",
-                quantity,
-                self.chip_count,
+                f"Not enough chips to dispense {quantity}. Only {self.chip_count} available."
             )
         else:
             for _ in range(quantity):
@@ -110,7 +106,7 @@ class Dispenser:
                 time.sleep(0.1)  # wait for motion to begin
                 if not self._interlock_motion():
                     self.set_state(DispenserState.ERROR)
-                    logging.error("Dispense motion error at motor %d", self.motor_id)
+                    logging.error(f"Dispense motion error at motor {self.motor_id}")
                     break
                 self.chip_count -= 1
         if self.state != DispenserState.ERROR:
@@ -130,7 +126,7 @@ class Dispenser:
             time.sleep(0.1)
             if not self._interlock_motion():
                 self.set_state(DispenserState.ERROR)
-                logging.warning("Loading motion error at motor %d", self.motor_id)
+                logging.warning(f"Loading motion error at motor {self.motor_id}")
                 return
         self.chip_count += quantity
         self.set_state(DispenserState.IDLE)
@@ -153,7 +149,7 @@ class Dispenser:
             )
             self.motor_controller.write(self.motor_id, control_table.TORQUE_ENABLE, 1)
         except Exception as e:
-            logging.warning("Failed to initialize motor %d: %s", self.motor_id, e)
+            logging.warning(f"Failed to initialize motor {self.motor_id}: {e}")
             self.set_state(DispenserState.ERROR)
 
     def get_state(self) -> DispenserState:
