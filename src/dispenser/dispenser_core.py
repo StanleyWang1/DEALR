@@ -1,9 +1,9 @@
-import time
 import logging
+import time
 from enum import Enum, auto
 
-from dynamixel_controller import DynamixelController
-import control_table
+from . import control_table
+from .dynamixel_controller import DynamixelController
 
 
 class DispenserState(Enum):
@@ -20,8 +20,16 @@ class DispenserState(Enum):
 
 ALLOWED_TRANSITIONS = {
     DispenserState.OFF: [DispenserState.ON, DispenserState.ERROR],
-    DispenserState.ON: [DispenserState.OFF, DispenserState.HOMING, DispenserState.ERROR],
-    DispenserState.HOMING: [DispenserState.OFF, DispenserState.IDLE, DispenserState.ERROR],
+    DispenserState.ON: [
+        DispenserState.OFF,
+        DispenserState.HOMING,
+        DispenserState.ERROR,
+    ],
+    DispenserState.HOMING: [
+        DispenserState.OFF,
+        DispenserState.IDLE,
+        DispenserState.ERROR,
+    ],
     DispenserState.IDLE: [
         DispenserState.OFF,
         DispenserState.LOADING,
@@ -49,7 +57,9 @@ class Dispenser:
         """Attempt to change state; return True if allowed."""
         allowed = ALLOWED_TRANSITIONS.get(self.state, [])
         if new_state not in allowed:
-            logging.warning("Invalid transition: %s → %s", self.state.name, new_state.name)
+            logging.warning(
+                "Invalid transition: %s → %s", self.state.name, new_state.name
+            )
             return False
         self.state = new_state
         return True
@@ -97,7 +107,7 @@ class Dispenser:
                     control_table.GOAL_POSITION,
                     self.current_position,
                 )
-                time.sleep(0.1) # wait for motion to begin
+                time.sleep(0.1)  # wait for motion to begin
                 if not self._interlock_motion():
                     self.set_state(DispenserState.ERROR)
                     logging.error("Dispense motion error at motor %d", self.motor_id)
@@ -110,7 +120,9 @@ class Dispenser:
         """Load chips into the dispenser."""
         if not self.set_state(DispenserState.LOADING):
             return
-        if self.chip_count == 0: # loading from empty, re-index chip carriage by one step
+        if (
+            self.chip_count == 0
+        ):  # loading from empty, re-index chip carriage by one step
             self.current_position += control_table.DISPENSE_STEP
             self.motor_controller.write(
                 self.motor_id, control_table.GOAL_POSITION, self.current_position
@@ -133,8 +145,12 @@ class Dispenser:
             )
             time.sleep(0.5)
             self.motor_controller.write(self.motor_id, control_table.OPERATING_MODE, 4)
-            self.motor_controller.write(self.motor_id, control_table.PROFILE_VELOCITY, velocity)
-            self.motor_controller.write(self.motor_id, control_table.PROFILE_ACCELERATION, acceleration)
+            self.motor_controller.write(
+                self.motor_id, control_table.PROFILE_VELOCITY, velocity
+            )
+            self.motor_controller.write(
+                self.motor_id, control_table.PROFILE_ACCELERATION, acceleration
+            )
             self.motor_controller.write(self.motor_id, control_table.TORQUE_ENABLE, 1)
         except Exception as e:
             logging.warning("Failed to initialize motor %d: %s", self.motor_id, e)
@@ -147,4 +163,3 @@ class Dispenser:
     def get_chip_count(self) -> int:
         """Return the chip count."""
         return self.chip_count
-    

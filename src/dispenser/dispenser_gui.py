@@ -1,8 +1,9 @@
+import logging
+import threading
 import tkinter as tk
 from tkinter import ttk
-import threading
-import logging
-from dispenser_core import Dispenser, DispenserState, ALLOWED_TRANSITIONS
+
+from .dispenser_core import ALLOWED_TRANSITIONS, Dispenser, DispenserState
 
 
 def start_gui(dispenser: "Dispenser"):
@@ -16,10 +17,18 @@ def start_gui(dispenser: "Dispenser"):
         state = dispenser.get_state()
         allowed = ALLOWED_TRANSITIONS.get(state, [])
 
-        btn_dispense.config(state=("normal" if DispenserState.DISPENSING in allowed else "disabled"))
-        btn_load.config(state=("normal" if DispenserState.LOADING in allowed else "disabled"))
-        btn_home.config(state=("normal" if DispenserState.HOMING in allowed else "disabled"))
-        btn_init.config(state=("normal" if DispenserState.ON in allowed else "disabled"))
+        btn_dispense.config(
+            state=("normal" if DispenserState.DISPENSING in allowed else "disabled")
+        )
+        btn_load.config(
+            state=("normal" if DispenserState.LOADING in allowed else "disabled")
+        )
+        btn_home.config(
+            state=("normal" if DispenserState.HOMING in allowed else "disabled")
+        )
+        btn_init.config(
+            state=("normal" if DispenserState.ON in allowed else "disabled")
+        )
 
         root.after(100, update_gui)
 
@@ -38,7 +47,9 @@ def start_gui(dispenser: "Dispenser"):
             logging.info("Dispensed %d chips.", qty)
             qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
         else:
-            logging.warning("Only %d chips available. Please load more.", dispenser.get_chip_count())
+            logging.warning(
+                "Only %d chips available. Please load more.", dispenser.get_chip_count()
+            )
 
     def on_load():
         try:

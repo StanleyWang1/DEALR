@@ -1,6 +1,7 @@
-from dispenser_core import Dispenser
-from dispenser_gui import start_gui
-from dynamixel_controller import DynamixelController
+from .dispenser_core import Dispenser
+from .dispenser_gui import start_gui
+from .dynamixel_controller import DynamixelController
+
 
 def main():
     port = "COM8"
@@ -12,6 +13,7 @@ def main():
     dispenser = Dispenser(motor_controller, motor_id)
 
     start_gui(dispenser)
+
 
 if __name__ == "__main__":
     main()
