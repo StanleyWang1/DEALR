@@ -2,111 +2,124 @@ import logging
 import threading
 import tkinter as tk
 from tkinter import ttk
-
 from .dispenser_core import ALLOWED_TRANSITIONS, Dispenser, DispenserState
 
 
-def start_gui(dispenser: "Dispenser"):
-    """Launch a GUI to control the dispenser."""
+class DispenserFrame(ttk.Frame):
+    def __init__(self, parent, dispenser: Dispenser, title: str):
+        super().__init__(parent)
+        self.dispenser = dispenser
+        self.color_map = {
+            "OFF": "gray",
+            "ON": "gold",
+            "IDLE": "green",
+            "DISPENSING": "dodger blue",
+            "LOADING": "cyan",
+            "ERROR": "red",
+        }
 
-    def update_gui():
-        chip_label.config(text=f"Chips: {dispenser.get_chip_count()}")
-        state_label.config(text=f"State: {dispenser.get_state().name}")
+        # Title
+        ttk.Label(self, text=title, font=("Arial", 18, "bold")).pack(pady=5)
 
-        # ✅ Enable/disable buttons based on valid transitions
-        state = dispenser.get_state()
-        allowed = ALLOWED_TRANSITIONS.get(state, [])
+        self.chip_label = tk.Label(self, text="Chips: 0", font=("Arial", 16))
+        self.chip_label.pack()
 
-        btn_dispense.config(
-            state=("normal" if DispenserState.DISPENSING in allowed else "disabled")
-        )
-        btn_load.config(
-            state=("normal" if DispenserState.LOADING in allowed else "disabled")
-        )
-        btn_home.config(
-            state=("normal" if DispenserState.HOMING in allowed else "disabled")
-        )
-        btn_init.config(
-            state=("normal" if DispenserState.ON in allowed else "disabled")
-        )
+        self.state_label = tk.Label(self, text="State: OFF", font=("Arial", 16))
+        self.state_label.pack()
 
-        root.after(100, update_gui)
+        # Quantity entry
+        qty_frame = ttk.Frame(self)
+        qty_frame.pack(pady=5)
+        ttk.Label(qty_frame, text="Quantity:").pack(side=tk.LEFT, padx=5)
+        self.qty_entry = ttk.Entry(qty_frame, width=8)
+        self.qty_entry.pack(side=tk.LEFT)
 
-    def run_in_thread(func):
+        # Buttons
+        btn_frame = ttk.Frame(self)
+        btn_frame.pack(pady=5)
+
+        self.btn_dispense = ttk.Button(btn_frame, text="Dispense", command=self.on_dispense)
+        self.btn_dispense.grid(row=0, column=0, padx=5)
+
+        self.btn_load = ttk.Button(btn_frame, text="Load", command=self.on_load)
+        self.btn_load.grid(row=0, column=1, padx=5)
+
+        self.btn_home = ttk.Button(btn_frame, text="Home", command=self.on_home)
+        self.btn_home.grid(row=0, column=2, padx=5)
+
+        self.btn_init = ttk.Button(btn_frame, text="Initialize", command=self.on_initialize)
+        self.btn_init.grid(row=0, column=3, padx=5)
+
+        self.after(100, self.update_gui)
+
+    # ---------- Utility ----------
+    def run_in_thread(self, func):
         threading.Thread(target=func, daemon=True).start()
 
-    def on_dispense():
+    # ---------- Button Callbacks ----------
+    def on_dispense(self):
         try:
-            qty = int(qty_entry.get())
+            qty = int(self.qty_entry.get())
         except ValueError:
             logging.warning("Invalid dispense quantity.")
             return
 
-        if qty <= dispenser.get_chip_count():
-            run_in_thread(lambda: dispenser.dispense(qty))
+        if qty <= self.dispenser.get_chip_count():
+            self.run_in_thread(lambda: self.dispenser.dispense(qty))
             logging.info("Dispensed %d chips.", qty)
-            qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
+            self.qty_entry.delete(0, tk.END)
         else:
-            logging.warning(
-                "Only %d chips available. Please load more.", dispenser.get_chip_count()
-            )
+            logging.warning("Only %d chips available. Please load more.", self.dispenser.get_chip_count())
 
-    def on_load():
+    def on_load(self):
         try:
-            qty = int(qty_entry.get())
+            qty = int(self.qty_entry.get())
         except ValueError:
             logging.warning("Invalid load quantity.")
             return
-
-        run_in_thread(lambda: dispenser.load(qty))
+        self.run_in_thread(lambda: self.dispenser.load(qty))
         logging.info("Loading %d chips...", qty)
-        qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
+        self.qty_entry.delete(0, tk.END)
 
-    def on_home():
-        run_in_thread(dispenser.home)
+    def on_home(self):
+        self.run_in_thread(self.dispenser.home)
         logging.info("Homing initiated.")
 
-    def on_initialize():
-        run_in_thread(dispenser.initialize_motor)
+    def on_initialize(self):
+        self.run_in_thread(self.dispenser.initialize_motor)
         logging.info("Motor initialization started.")
 
-    def on_quit():
-        root.destroy()
+    # ---------- GUI Updater ----------
+    def update_gui(self):
+        self.chip_label.config(text=f"Chips: {self.dispenser.get_chip_count()}")
+        state = self.dispenser.get_state()
+        self.state_label.config(text=f"State: {state.name}")
+        self.state_label.config(foreground=self.color_map.get(state.name, "black"))
 
-    # --- GUI Layout ---
+        allowed = ALLOWED_TRANSITIONS.get(state, [])
+        self.btn_dispense.config(state="normal" if DispenserState.DISPENSING in allowed else "disabled")
+        self.btn_load.config(state="normal" if DispenserState.LOADING in allowed else "disabled")
+        self.btn_home.config(state="normal" if DispenserState.HOMING in allowed else "disabled")
+        self.btn_init.config(state="normal" if DispenserState.ON in allowed else "disabled")
+
+        self.after(100, self.update_gui)
+
+
+def start_gui(disp1: Dispenser, disp2: Dispenser):
     root = tk.Tk()
-    root.title("Dispenser Control Panel")
+    root.title("Dual Dispenser Control Panel")
 
-    chip_label = ttk.Label(root, text="Chips: 0", font=("Arial", 20))
-    chip_label.pack(pady=5)
+    style = ttk.Style()
+    style.configure("TButton", font=("Avenir", 14))
+    style.configure("TLabel", font=("Avenir", 14))
 
-    state_label = ttk.Label(root, text="State: OFF", font=("Arial", 20))
-    state_label.pack(pady=5)
+    # Two Dispensers Side by Side
+    frame1 = DispenserFrame(root, disp1, "Dispenser 20")
+    frame1.grid(row=0, column=0, padx=20, pady=10)
 
-    qty_frame = ttk.Frame(root)
-    qty_frame.pack(pady=10)
+    frame2 = DispenserFrame(root, disp2, "Dispenser 21")
+    frame2.grid(row=0, column=1, padx=20, pady=10)
 
-    ttk.Label(qty_frame, text="Quantity:").pack(side=tk.LEFT, padx=5)
-    qty_entry = ttk.Entry(qty_frame, width=10)
-    qty_entry.pack(side=tk.LEFT)
-    qty_entry.insert(0, "0")
+    ttk.Button(root, text="Quit", command=root.destroy).grid(row=1, column=0, columnspan=2, pady=15)
 
-    btn_frame = ttk.Frame(root)
-    btn_frame.pack(pady=10)
-
-    btn_dispense = tk.Button(btn_frame, text="Dispense", command=on_dispense)
-    btn_dispense.grid(row=0, column=0, padx=5)
-
-    btn_load = tk.Button(btn_frame, text="Load", command=on_load)
-    btn_load.grid(row=0, column=1, padx=5)
-
-    btn_home = tk.Button(btn_frame, text="Home", command=on_home)
-    btn_home.grid(row=0, column=2, padx=5)
-
-    btn_init = tk.Button(btn_frame, text="Initialize", command=on_initialize)
-    btn_init.grid(row=0, column=3, padx=5)
-
-    tk.Button(btn_frame, text="Quit", command=on_quit).grid(row=0, column=4, padx=5)
-
-    update_gui()
     root.mainloop()

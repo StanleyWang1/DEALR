@@ -4,15 +4,20 @@ from .dynamixel_controller import DynamixelController
 
 
 def main():
+    # Dynamixel connection parameters
     port = "COM8"
     baudrate = 57600
-    motor_id = 21
     protocol_version = 2.0
 
+    # Create one shared Dynamixel controller
     motor_controller = DynamixelController(port, baudrate, protocol_version)
-    dispenser = Dispenser(motor_controller, motor_id)
 
-    start_gui(dispenser)
+    # Initialize two dispenser objects for motor IDs 20 and 21
+    disp1 = Dispenser(motor_controller, motor_id=20)
+    disp2 = Dispenser(motor_controller, motor_id=21)
+
+    # Start GUI with both dispensers
+    start_gui(disp1, disp2)
 
 
 if __name__ == "__main__":
