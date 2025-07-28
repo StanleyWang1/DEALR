@@ -27,20 +27,18 @@ def dealer_hand_value(hand: list[cards.Card]) -> int:
 
 class Dealer(StateMachine):
     idle = State(initial=True)
-    initial_deal = State()
     waiting_for_player = State()
     resolving_dealer = State()
     done = State(final=True)
 
-    start_game = idle.to(initial_deal)
-    player_action_start = initial_deal.to(waiting_for_player)
+    initial_deal = idle.to(waiting_for_player)
     player_hits = waiting_for_player.to.itself()
     player_stands = waiting_for_player.to.itself()
     player_blackjack = waiting_for_player.to(done, cond="player_has_blackjack")
     resolve_dealer_hand = waiting_for_player.to(
         resolving_dealer, cond="all_players_done"
     )
-    settling_bets = resolve_dealer_hand.to(done)
+    settling_bets = resolving_dealer.to(done)
 
     def __init__(self, players: list[Player]) -> None:
         self.players = players
@@ -61,7 +59,7 @@ class Dealer(StateMachine):
     def player_has_blackjack(self) -> bool:
         return any(cards.hand_value(p.hand) == BLACKJACK for p in self.players)
 
-    def on_start_game(self) -> None:
+    def on_initial_deal(self) -> None:
         random.shuffle(self.deck)
         # TODO: add hardware shuffling
         for _ in range(2):
