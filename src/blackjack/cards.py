@@ -1,8 +1,11 @@
+"""Playing card class."""
+
 from enum import IntEnum, StrEnum, auto
 from typing import NamedTuple
 
 
 class Suit(StrEnum):
+    """Enum for all card suits."""
     C = auto()
     D = auto()
     H = auto()
@@ -10,6 +13,7 @@ class Suit(StrEnum):
 
 
 class Rank(IntEnum):
+    """Enum for all card ranks."""
     ACE = auto()
     TWO = auto()
     THREE = auto()
@@ -26,11 +30,20 @@ class Rank(IntEnum):
 
 
 class Card(NamedTuple):
+    """Union of rank and suit."""
     rank: Rank
     suit: Suit
 
 
 def hand_value(hand: list[Card]) -> int:
+    """Calculates the blackjack value of a list of cards.
+
+    Args:
+        hand: List of cards to calculate the value of.
+
+    Returns:
+        int: Blackjack card value.
+    """
     value = 0
     for card in hand:
         match card.rank:

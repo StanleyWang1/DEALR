@@ -13,6 +13,14 @@ BLACKJACK = 21
 
 
 def dealer_hand_value(hand: list[cards.Card]) -> int:
+    """Calculates the value of the dealer's hand taking into account ace hard 11s.
+
+    Args:
+        hand: Dealer's current end.
+
+    Returns:
+        int: Value of the hand.
+    """
     value = 0
     for card in hand:
         match card.rank:
@@ -26,6 +34,8 @@ def dealer_hand_value(hand: list[cards.Card]) -> int:
 
 
 class Dealer(StateMachine):
+    """State machine for a blackjack dealer."""
+
     idle = State(initial=True)
     waiting_for_player = State()
     resolving_dealer = State()
@@ -42,12 +52,19 @@ class Dealer(StateMachine):
 
     def __init__(self, players: list[Player]) -> None:
         self.players = players
-        self.deck = list(cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit))
+        self.deck = list(
+            cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit)
+        )
         self.hand: list[cards.Card] = []
         self.player_index = 0
         super().__init__()
 
     def all_players_done(self) -> bool:
+        """Condition to check that all active players are no longer hitting.
+
+        Returns:
+            bool: If all players have finished playing.
+        """
         all_standing = all(
             p.last_action == PlayerAction.STAND
             for p in self.players
@@ -57,9 +74,15 @@ class Dealer(StateMachine):
         return all_standing or all_busted
 
     def player_has_blackjack(self) -> bool:
+        """Check for any blackjacks.
+
+        Returns:
+            bool: If any players have a blackjack.
+        """
         return any(cards.hand_value(p.hand) == BLACKJACK for p in self.players)
 
     def on_initial_deal(self) -> None:
+        """Deal the initial cards from the deck, dealers included."""
         random.shuffle(self.deck)
         # TODO: add hardware shuffling
         for _ in range(2):
@@ -70,6 +93,7 @@ class Dealer(StateMachine):
             self.hand.append(dealer_card)
 
     def on_player_hits(self) -> None:
+        """Give players a card."""
         player = self.players[self.player_index]
         card = self.deck.pop()
         player.hand.append(card)
@@ -79,16 +103,20 @@ class Dealer(StateMachine):
             player.bet = 0
         self.player_index = (self.player_index + 1) % len(self.players)
 
-    def on_player_stands(self, player: Player) -> None:
+    def on_player_stands(self) -> None:
+        """Does nothing but updates the player indices and state."""
+        player = self.players[self.player_index]
         player.last_action = PlayerAction.STAND
         self.player_index = (self.player_index + 1) % len(self.players)
 
     def on_resolve_dealer_hand(self) -> None:
+        """Draws to the dealer until 17."""
         while dealer_hand_value(self.hand) < DEALER_LIMIT:
             card = self.deck.pop()
             self.hand.append(card)
 
     def on_player_blackjack(self) -> None:
+        """Automatically finishes the game and pays out to all blackjacked players."""
         active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]
         if cards.hand_value(self.hand) != BLACKJACK:
             for p in active_players:
@@ -96,6 +124,7 @@ class Dealer(StateMachine):
                     p.bet = p.bet + p.bet // 2
 
     def on_settling_bets(self) -> None:
+        """Settles bets after game conclusion."""
         dealer_value = dealer_hand_value(self.hand)
         active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]
         if dealer_value > BLACKJACK:
