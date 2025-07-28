@@ -60,6 +60,9 @@ class Dispenser:
         return self._state
 
     @state.setter
+    def state(self, new_state: DispenserState) -> None:
+        self._state = new_state
+    
     def set_state(self, new_state: DispenserState) -> bool:
         """Attempt to change state; return True if allowed."""
 
@@ -67,13 +70,18 @@ class Dispenser:
         if new_state not in allowed:
             logging.warning(f"Invalid transition: {self.state.name} → {new_state.name}")
             return False
-        self._state = new_state
+        self.state = new_state
         return True
 
     @property
     def chip_count(self) -> int:
         """Return the chip count."""
         return self._chip_count
+
+    @chip_count.setter
+    def chip_count(self, new_chip_count: int) -> None:
+        """Return the chip count."""
+        self._chip_count = new_chip_count
 
     def _interlock_motion(self) -> bool:
         """Wait until motion completes or timeout expires."""
