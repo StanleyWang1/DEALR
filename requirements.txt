@@ -261,6 +261,7 @@ numpy==2.3.2 \
     # via
     #   contourpy
     #   matplotlib
+    #   onnx
     #   opencv-python
     #   pandas
     #   scipy
@@ -325,6 +326,23 @@ nvidia-nvtx-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform == 'li
     --hash=sha256:6574241a3ec5fdc9334353ab8c479fe75841dbe8f4532a8fc97ce63503330ba1 \
     --hash=sha256:b90bed3df379fa79afbd21be8e04a0314336b8ae16768b58f2d34cb1d04cd7d2
     # via torch
+onnx==1.18.0 \
+    --hash=sha256:030d9f5f878c5f4c0ff70a4545b90d7812cd6bfe511de2f3e469d3669c8cff95 \
+    --hash=sha256:230b0fb615e5b798dc4a3718999ec1828360bc71274abd14f915135eab0255f1 \
+    --hash=sha256:2f4d37b0b5c96a873887652d1cbf3f3c70821b8c66302d84b0f0d89dd6e47653 \
+    --hash=sha256:3c137eecf6bc618c2f9398bcc381474b55c817237992b169dfe728e169549e8f \
+    --hash=sha256:3d8dbf9e996629131ba3aa1afd1d8239b660d1f830c6688dd7e03157cccd6b9c \
+    --hash=sha256:6c093ffc593e07f7e33862824eab9225f86aa189c048dd43ffde207d7041a55f \
+    --hash=sha256:6f91930c1a284135db0f891695a263fc876466bf2afbd2215834ac08f600cfca \
+    --hash=sha256:8521544987d713941ee1e591520044d35e702f73dc87e91e6d4b15a064ae813d \
+    --hash=sha256:a69afd0baa372162948b52c13f3aa2730123381edf926d7ef3f68ca7cec6d0d0
+    # via
+    #   dealr
+    #   onnxslim
+onnxslim==0.1.61 \
+    --hash=sha256:dba958312d7bc42042d33cc7285a8bba3afd481d2709e7823619c1d908f9e228 \
+    --hash=sha256:deed0c05b3b714e2b6ca595f198cc6f5407177d8ded69e34ae9d768f6dba1768
+    # via dealr
 opencv-python==4.11.0.86 \
     --hash=sha256:03d60ccae62304860d232272e4a4fda93c39d595780cb40b161b310244b736a4 \
     --hash=sha256:085ad9b77c18853ea66283e98affefe2de8cc4c1f43eda4c100cf9b2721142ec \
@@ -340,6 +358,7 @@ packaging==25.0 \
     # via
     #   deprecation
     #   matplotlib
+    #   onnxslim
     #   pytest
 pandas==2.3.1 \
     --hash=sha256:0a95b9ac964fe83ce317827f80304d37388ea77616b1425f0ae41c9d2d0d7bb2 \
@@ -418,6 +437,15 @@ pluggy==1.6.0 \
     --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
     # via pytest
+protobuf==6.31.1 \
+    --hash=sha256:426f59d2964864a1a366254fa703b8632dcec0790d8862d30034d8245e1cd447 \
+    --hash=sha256:4ee898bf66f7a8b0bd21bce523814e6fbd8c6add948045ce958b73af7e8878c6 \
+    --hash=sha256:6f1227473dc43d44ed644425268eb7c2e488ae245d51c6866d19fe158e207402 \
+    --hash=sha256:720a6c7e6b77288b85063569baae8536671b39f15cc22037ec7045658d80489e \
+    --hash=sha256:7fa17d5a29c2e04b7d90e5e32388b8bfd0e7107cd8e616feef7ed3fa6bdab5c9 \
+    --hash=sha256:a40fc12b84c154884d7d4c4ebd675d5b3b5283e155f324049ae396b95ddebc39 \
+    --hash=sha256:d8cac4c982f0b957a4dc73a80e2ea24fab08e679c0de9deb835f4a12d69aca9a
+    # via onnx
 psutil==7.0.0 \
     --hash=sha256:101d71dc322e3cffd7cea0650b09b3d08b8e7c4109dd6809fe452dfd00e58b25 \
     --hash=sha256:1fcee592b4c6f146991ca55919ea3d1f8926497a713ed7faaf8225e174581e91 \
@@ -529,7 +557,9 @@ six==1.17.0 \
 sympy==1.14.0 \
     --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
     --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
-    # via torch
+    # via
+    #   onnxslim
+    #   torch
 torch==2.7.1 \
     --hash=sha256:03563603d931e70722dce0e11999d53aa80a375a3d78e6b39b9f6805ea0a8d28 \
     --hash=sha256:0da4f4dba9f65d0d203794e619fe7ca3247a55ffdcbd17ae8fb83c8b2dc9b585 \
@@ -570,6 +600,7 @@ typing-extensions==4.14.1 \
     --hash=sha256:d1e1e3b58374dc93031d6eda2420a48ea44a36c2b4766a4fdeb3710755731d76
     # via
     #   mypy
+    #   onnx
     #   torch
 tzdata==2025.2 \
     --hash=sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8 \
