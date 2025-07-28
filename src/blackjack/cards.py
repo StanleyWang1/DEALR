@@ -38,6 +38,6 @@ def hand_value(hand: list[Card]) -> int:
                 value += 10
             case Rank.ACE:
                 value += 1 if value + 11 > 21 else 11
-            case number_card:
+            case number_card:  # HACK: relies on the rank enum being in a specific order
                 value += number_card.value
     return value
