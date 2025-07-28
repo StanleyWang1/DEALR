@@ -44,7 +44,7 @@ class Dealer(StateMachine):
 
     def __init__(self, players: list[Player]) -> None:
         self.players = players
-        self.deck = list(itertools.product(cards.Rank, cards.Suit))
+        self.deck = list(cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit))
         self.hand: list[cards.Card] = []
         self.player_index = 0
         super().__init__()
