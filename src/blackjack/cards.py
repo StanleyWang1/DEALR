@@ -28,3 +28,16 @@ class Rank(IntEnum):
 class Card(NamedTuple):
     rank: Rank
     suit: Suit
+
+
+def hand_value(hand: list[Card]) -> int:
+    value = 0
+    for card in hand:
+        match card.rank:
+            case Rank.JACK | Rank.QUEEN | Rank.KING:
+                value += 10
+            case Rank.ACE:
+                value += 1 if value + 11 > 21 else 11
+            case number_card:
+                value += number_card.value
+    return value
