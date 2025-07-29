@@ -1,3 +1,5 @@
+"""GUI for chip dispenser."""
+
 import logging
 import threading
 import tkinter as tk
@@ -44,31 +46,31 @@ def start_gui(dispenser: Dispenser):
 
         if qty <= dispenser.chip_count:
             run_in_thread(lambda: dispenser.dispense(qty))
-            logging.info(f"Dispensed {qty} chips.")
+            logging.info("Dispensed %d chips", qty)
             qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
         else:
             logging.warning(
-                f"Only {dispenser.chip_count} chips available. Please load more."
+                "Only %d chips available, please load more", dispenser.chip_count
             )
 
     def on_load():
         try:
             qty = int(qty_entry.get())
         except ValueError:
-            logging.warning("Invalid load quantity.")
+            logging.warning("Invalid load quantity")
             return
 
         run_in_thread(lambda: dispenser.load(qty))
-        logging.info(f"Loading {qty} chips...")
+        logging.info("Loading %d chips...", qty)
         qty_entry.delete(0, tk.END)  # ✅ Clear entry after success
 
     def on_home():
         run_in_thread(dispenser.home)
-        logging.info("Homing initiated.")
+        logging.info("Homing initiated")
 
     def on_initialize():
         run_in_thread(dispenser.initialize_motor)
-        logging.info("Motor initialization started.")
+        logging.info("Motor initialization started")
 
     def on_quit():
         root.destroy()

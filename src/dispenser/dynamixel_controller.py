@@ -1,12 +1,13 @@
+"""Low-level Dynamixel motor controller software."""
+
+import logging
 from typing import Tuple, Union
 
 from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler  # type: ignore
 
 
 class DynamixelController:
-    """
-    A class to control Dynamixel motors using the Dynamixel SDK.
-    """
+    """A class to control Dynamixel motors using the Dynamixel SDK."""
 
     def __init__(
         self, device_name: str, baudrate: int, protocol_version: float
@@ -68,19 +69,21 @@ class DynamixelController:
                 self.port_handler, dxl_id, address, command_value
             )
         else:
-            print(f"Invalid byte length: {length}")
+            logging.error("Invalid byte length: %d", length)
             return False
 
         if dxl_comm_result != COMM_SUCCESS:
-            print(
-                f"Communication error on motor {dxl_id}: "
-                f"{self.packet_handler.getTxRxResult(dxl_comm_result)}"
+            logging.error(
+                "Communication error on motor %d: %s",
+                dxl_id,
+                self.packet_handler.getTxRxResult(dxl_comm_result),
             )
             return False
         if dxl_error != 0:
-            print(
-                f"Packet error on motor {dxl_id}: "
-                f"{self.packet_handler.getRxPacketError(dxl_error)}"
+            logging.error(
+                "Packet error on motor %d: %s",
+                dxl_id,
+                self.packet_handler.getRxPacketError(dxl_error),
             )
             return False
         return True
@@ -110,19 +113,21 @@ class DynamixelController:
                 self.port_handler, dxl_id, address
             )
         else:
-            print(f"Invalid byte length: {length}")
+            logging.error("Invalid byte length: %d", length)
             return False
 
         if dxl_comm_result != COMM_SUCCESS:
-            print(
-                f"Communication error on motor {dxl_id}: "
-                f"{self.packet_handler.getTxRxResult(dxl_comm_result)}"
+            logging.error(
+                "Communication error on motor %d: %s",
+                dxl_id,
+                self.packet_handler.getTxRxResult(dxl_comm_result),
             )
             return False
         if dxl_error != 0:
-            print(
-                f"Packet error on motor {dxl_id}: "
-                f"{self.packet_handler.getRxPacketError(dxl_error)}"
+            logging.error(
+                "Packet error on motor %d: %s",
+                dxl_id,
+                self.packet_handler.getRxPacketError(dxl_error),
             )
             return False
         return dxl_value
@@ -133,13 +138,15 @@ class DynamixelController:
 
 
 def main() -> None:
+    """Demo driver for Dynamixel motor."""
+
     controller = DynamixelController("/dev/ttyUSB0", 57600, 2.0)
     try:
         # Example: Enable torque (address and length depend on motor model)
         controller.write(1, (64, 1), 1)
         position = controller.read(1, (132, 4))
         print(f"Position: {position}")
-    except Exception as e:
+    except Exception as e:  # TODO: catch more general exception
         print(f"Error: {e}")
     finally:
         controller.close_port()
