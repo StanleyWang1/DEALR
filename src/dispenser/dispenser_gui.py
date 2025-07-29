@@ -77,7 +77,7 @@ class DispenserFrame(ttk.Frame):
             self.qty_entry.delete(0, tk.END)
         else:
             logging.warning(
-                "Only %d chips available, please load more", dispenser.chip_count
+                "Only %d chips available, please load more", self.dispenser.chip_count
             )
 
     def on_load(self):
@@ -145,5 +145,6 @@ def start_gui(disp1: Dispenser, disp2: Dispenser):
 
 
 if __name__ == "__main__":
-    dispenser: Dispenser = ...
-    start_gui(dispenser)
+    dispenser1: Dispenser = ...
+    dispenser2: Dispenser = ...
+    start_gui(dispenser1, dispenser2)
