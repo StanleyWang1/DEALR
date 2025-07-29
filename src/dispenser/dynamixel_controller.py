@@ -1,7 +1,6 @@
 """Low-level Dynamixel motor controller software."""
 
 import logging
-from typing import Tuple, Union
 
 from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler  # type: ignore
 
@@ -42,7 +41,7 @@ class DynamixelController:
             raise RuntimeError("Failed to change the baudrate")
 
     def write(
-        self, dxl_id: int, command_type: Tuple[int, int], command_value: int
+        self, dxl_id: int, command_type: tuple[int, int], command_value: int
     ) -> bool:
         """
         Writes a value for a specified type of command to a specific motor ID.
@@ -88,7 +87,7 @@ class DynamixelController:
             return False
         return True
 
-    def read(self, dxl_id: int, command_type: Tuple[int, int]) -> Union[int, bool]:
+    def read(self, dxl_id: int, command_type: tuple[int, int]) -> int | bool:
         """
         Reads a value for a specified type of command to a specific motor ID.
 
