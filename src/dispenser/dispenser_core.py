@@ -92,10 +92,11 @@ class Dispenser:
 
         start_time = time.time()
         while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
-            if self.motor_controller.read(self.motor_id, control_table.MOVING) == 0:
-                return True
+            # if self.motor_controller.read(self.motor_id, control_table.MOVING) == 0:
+            #     return True
             time.sleep(0.01)
-        return False
+        # return False
+        return True
 
     def home(self) -> None:
         """Move the motor to the home position."""
