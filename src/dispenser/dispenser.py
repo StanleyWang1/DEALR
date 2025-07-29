@@ -1,7 +1,7 @@
 from .dispenser_core import Dispenser
 from .dispenser_gui import start_gui
 from .dynamixel_controller import DynamixelController
-
+import threading
 
 def main():
     # Dynamixel connection parameters
@@ -11,13 +11,15 @@ def main():
 
     # Create one shared Dynamixel controller
     motor_controller = DynamixelController(port, baudrate, protocol_version)
+    motor_lock = threading.Lock()
 
-    # Initialize two dispenser objects for motor IDs 20 and 21
-    disp1 = Dispenser(motor_controller, motor_id=20)
-    disp2 = Dispenser(motor_controller, motor_id=21)
+    # Initialize three dispenser objects for motor IDs 20, 21, 22
+    disp1 = Dispenser(motor_controller, motor_id=20, lock=motor_lock)
+    disp2 = Dispenser(motor_controller, motor_id=21, lock=motor_lock)
+    disp3 = Dispenser(motor_controller, motor_id=22, lock=motor_lock)
 
     # Start GUI with both dispensers
-    start_gui(disp1, disp2)
+    start_gui(disp1, disp2, disp3)
 
 
 if __name__ == "__main__":

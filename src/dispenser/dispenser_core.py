@@ -1,5 +1,6 @@
 import logging
 import time
+import threading
 from enum import Enum, auto
 
 from . import control_table
@@ -7,8 +8,7 @@ from .dynamixel_controller import DynamixelController
 
 
 class DispenserState(Enum):
-    """Possible dispenser states."""
-
+    """Possible dispenser states for the chip dispenser."""
     OFF = auto()
     ON = auto()
     IDLE = auto()
@@ -20,16 +20,8 @@ class DispenserState(Enum):
 
 ALLOWED_TRANSITIONS = {
     DispenserState.OFF: [DispenserState.ON, DispenserState.ERROR],
-    DispenserState.ON: [
-        DispenserState.OFF,
-        DispenserState.HOMING,
-        DispenserState.ERROR,
-    ],
-    DispenserState.HOMING: [
-        DispenserState.OFF,
-        DispenserState.IDLE,
-        DispenserState.ERROR,
-    ],
+    DispenserState.ON: [DispenserState.OFF, DispenserState.HOMING, DispenserState.ERROR],
+    DispenserState.HOMING: [DispenserState.OFF, DispenserState.IDLE, DispenserState.ERROR],
     DispenserState.IDLE: [
         DispenserState.OFF,
         DispenserState.LOADING,
@@ -43,57 +35,78 @@ ALLOWED_TRANSITIONS = {
 
 
 class Dispenser:
-    """Stateful class for controlling a Dynamixel chip dispenser."""
+    """Stateful class for controlling a Dynamixel-based chip dispenser (thread-safe)."""
 
-    def __init__(self, motor_controller: DynamixelController, motor_id: int) -> None:
-        """Initialize a Dispenser instance."""
+    def __init__(self, motor_controller: DynamixelController, motor_id: int, lock: threading.Lock = None) -> None:
         self.motor_controller = motor_controller
         self.motor_id = motor_id
+        self.lock = lock  # shared lock for thread-safe access
         self.chip_count = 0
         self.state = DispenserState.OFF
         self.current_position = 0
 
+    # ----------------- Utility -----------------
+    def _with_lock(self, func, *args, **kwargs):
+        """Execute a motor controller function with an optional lock."""
+        if self.lock:
+            with self.lock:
+                return func(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    def _safe_write(self, address, value):
+        """Thread-safe motor write."""
+        self._with_lock(self.motor_controller.write, self.motor_id, address, value)
+
+    def _safe_read(self, address):
+        """Thread-safe motor read."""
+        return self._with_lock(self.motor_controller.read, self.motor_id, address)
+
+    def _safe_reboot(self):
+        """Thread-safe motor reboot."""
+        self._with_lock(
+            self.motor_controller.packet_handler.reboot,
+            self.motor_controller.port_handler,
+            self.motor_id,
+        )
+
+    def _interlock_motion(self) -> bool:
+        """Wait for motion to finish or timeout."""
+        start_time = time.time()
+        while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
+            # Optional: Check moving flag with self._safe_read(control_table.MOVING)
+            time.sleep(0.01)
+        return True
+
     def set_state(self, new_state: DispenserState) -> bool:
-        """Attempt to change state; return True if allowed."""
+        """Attempt a state transition, return True if valid."""
         allowed = ALLOWED_TRANSITIONS.get(self.state, [])
         if new_state not in allowed:
-            logging.warning(
-                "Invalid transition: %s → %s", self.state.name, new_state.name
-            )
+            logging.warning("Invalid transition: %s → %s", self.state.name, new_state.name)
             return False
         self.state = new_state
         return True
 
-    def _interlock_motion(self) -> bool:
-        """Wait until motion completes or timeout expires."""
-        start_time = time.time()
-        while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
-            # if self.motor_controller.read(self.motor_id, control_table.MOVING) == 0:
-            #     return True
-            time.sleep(0.01)
-        # return False
-        return True
-
+    # ----------------- Core Actions -----------------
     def home(self) -> None:
-        """Move the motor to the home position."""
+        """Move motor to its home position."""
         if not self.set_state(DispenserState.HOMING):
             return
-        self.motor_controller.write(
-            self.motor_id,
-            control_table.GOAL_POSITION,
-            control_table.MOTOR_HOMES[self.motor_id],
-        )
+
+        target = control_table.MOTOR_HOMES[self.motor_id]
+        self._safe_write(control_table.GOAL_POSITION, target)
+
         if not self._interlock_motion():
-            self.set_state(DispenserState.ERROR)
-            logging.error("Homing motion error at motor %d", self.motor_id)
+            self._handle_motion_error("Homing motion error")
             return
-        self.current_position = control_table.MOTOR_HOMES[self.motor_id]
+
+        self.current_position = target
         self.set_state(DispenserState.IDLE)
 
     def dispense(self, quantity: int) -> None:
-        """Dispense a given number of chips."""
+        """Dispense a specified number of chips."""
         if not self.set_state(DispenserState.DISPENSING):
             return
+
         if self.chip_count < quantity:
             logging.warning(
                 "Not enough chips to dispense %d. Only %d available.",
@@ -103,17 +116,13 @@ class Dispenser:
         else:
             for _ in range(quantity):
                 self.current_position += control_table.DISPENSE_STEP
-                self.motor_controller.write(
-                    self.motor_id,
-                    control_table.GOAL_POSITION,
-                    self.current_position,
-                )
-                time.sleep(0.1)  # wait for motion to begin
+                self._safe_write(control_table.GOAL_POSITION, self.current_position)
+                time.sleep(0.1)
                 if not self._interlock_motion():
-                    self.set_state(DispenserState.ERROR)
-                    logging.error("Dispense motion error at motor %d", self.motor_id)
+                    self._handle_motion_error("Dispense motion error")
                     break
                 self.chip_count -= 1
+
         if self.state != DispenserState.ERROR:
             self.set_state(DispenserState.IDLE)
 
@@ -121,18 +130,15 @@ class Dispenser:
         """Load chips into the dispenser."""
         if not self.set_state(DispenserState.LOADING):
             return
-        if (
-            self.chip_count == 0
-        ):  # loading from empty, re-index chip carriage by one step
+
+        if self.chip_count == 0:  # re-index carriage if empty
             self.current_position += control_table.DISPENSE_STEP
-            self.motor_controller.write(
-                self.motor_id, control_table.GOAL_POSITION, self.current_position
-            )
+            self._safe_write(control_table.GOAL_POSITION, self.current_position)
             time.sleep(0.1)
             if not self._interlock_motion():
-                self.set_state(DispenserState.ERROR)
-                logging.warning("Loading motion error at motor %d", self.motor_id)
+                self._handle_motion_error("Loading motion error")
                 return
+
         self.chip_count += quantity
         self.set_state(DispenserState.IDLE)
 
@@ -140,27 +146,27 @@ class Dispenser:
         """Reboot and configure the motor."""
         if not self.set_state(DispenserState.ON):
             return
+
         try:
-            self.motor_controller.packet_handler.reboot(
-                self.motor_controller.port_handler, self.motor_id
-            )
+            self._safe_reboot()
             time.sleep(0.5)
-            self.motor_controller.write(self.motor_id, control_table.OPERATING_MODE, 4)
-            self.motor_controller.write(
-                self.motor_id, control_table.PROFILE_VELOCITY, velocity
-            )
-            self.motor_controller.write(
-                self.motor_id, control_table.PROFILE_ACCELERATION, acceleration
-            )
-            self.motor_controller.write(self.motor_id, control_table.TORQUE_ENABLE, 1)
+            self._safe_write(control_table.OPERATING_MODE, 4)
+            self._safe_write(control_table.PROFILE_VELOCITY, velocity)
+            self._safe_write(control_table.PROFILE_ACCELERATION, acceleration)
+            self._safe_write(control_table.TORQUE_ENABLE, 1)
         except Exception as e:
             logging.warning("Failed to initialize motor %d: %s", self.motor_id, e)
             self.set_state(DispenserState.ERROR)
 
+    # ----------------- Helper Methods -----------------
+    def _handle_motion_error(self, message: str):
+        """Set error state and log a message."""
+        self.set_state(DispenserState.ERROR)
+        logging.error("%s at motor %d", message, self.motor_id)
+
+    # ----------------- Getters -----------------
     def get_state(self) -> DispenserState:
-        """Return the current state."""
         return self.state
 
     def get_chip_count(self) -> int:
-        """Return the chip count."""
         return self.chip_count
