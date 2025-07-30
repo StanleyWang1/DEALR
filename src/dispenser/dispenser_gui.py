@@ -1,7 +1,10 @@
+"""GUI for chip dispenser."""
+
 import logging
 import threading
 import tkinter as tk
 from tkinter import ttk
+
 from .dispenser_core import ALLOWED_TRANSITIONS, Dispenser, DispenserState
 
 
@@ -38,7 +41,9 @@ class DispenserFrame(ttk.Frame):
         btn_frame = ttk.Frame(self)
         btn_frame.pack(pady=5)
 
-        self.btn_dispense = ttk.Button(btn_frame, text="Dispense", command=self.on_dispense)
+        self.btn_dispense = ttk.Button(
+            btn_frame, text="Dispense", command=self.on_dispense
+        )
         self.btn_dispense.grid(row=0, column=0, padx=5)
 
         self.btn_load = ttk.Button(btn_frame, text="Load", command=self.on_load)
@@ -47,7 +52,9 @@ class DispenserFrame(ttk.Frame):
         self.btn_home = ttk.Button(btn_frame, text="Home", command=self.on_home)
         self.btn_home.grid(row=0, column=2, padx=5)
 
-        self.btn_init = ttk.Button(btn_frame, text="Initialize", command=self.on_initialize)
+        self.btn_init = ttk.Button(
+            btn_frame, text="Initialize", command=self.on_initialize
+        )
         self.btn_init.grid(row=0, column=3, padx=5)
 
         self.after(100, self.update_gui)
@@ -64,18 +71,20 @@ class DispenserFrame(ttk.Frame):
             logging.warning("Invalid dispense quantity.")
             return
 
-        if qty <= self.dispenser.get_chip_count():
+        if qty <= self.dispenser.chip_count:
             self.run_in_thread(lambda: self.dispenser.dispense(qty))
-            logging.info("Dispensed %d chips.", qty)
+            logging.info("Dispensed %d chips", qty)
             self.qty_entry.delete(0, tk.END)
         else:
-            logging.warning("Only %d chips available. Please load more.", self.dispenser.get_chip_count())
+            logging.warning(
+                "Only %d chips available, please load more", self.dispenser.chip_count
+            )
 
     def on_load(self):
         try:
             qty = int(self.qty_entry.get())
         except ValueError:
-            logging.warning("Invalid load quantity.")
+            logging.warning("Invalid load quantity")
             return
         self.run_in_thread(lambda: self.dispenser.load(qty))
         logging.info("Loading %d chips...", qty)
@@ -83,24 +92,32 @@ class DispenserFrame(ttk.Frame):
 
     def on_home(self):
         self.run_in_thread(self.dispenser.home)
-        logging.info("Homing initiated.")
+        logging.info("Homing initiated")
 
     def on_initialize(self):
         self.run_in_thread(self.dispenser.initialize_motor)
-        logging.info("Motor initialization started.")
+        logging.info("Motor initialization started")
 
     # ---------- GUI Updater ----------
     def update_gui(self):
-        self.chip_label.config(text=f"Chips: {self.dispenser.get_chip_count()}")
-        state = self.dispenser.get_state()
+        self.chip_label.config(text=f"Chips: {self.dispenser.chip_count}")
+        state = self.dispenser.state
         self.state_label.config(text=f"State: {state.name}")
         self.state_label.config(foreground=self.color_map.get(state.name, "black"))
 
         allowed = ALLOWED_TRANSITIONS.get(state, [])
-        self.btn_dispense.config(state="normal" if DispenserState.DISPENSING in allowed else "disabled")
-        self.btn_load.config(state="normal" if DispenserState.LOADING in allowed else "disabled")
-        self.btn_home.config(state="normal" if DispenserState.HOMING in allowed else "disabled")
-        self.btn_init.config(state="normal" if DispenserState.ON in allowed else "disabled")
+        self.btn_dispense.config(
+            state="normal" if DispenserState.DISPENSING in allowed else "disabled"
+        )
+        self.btn_load.config(
+            state="normal" if DispenserState.LOADING in allowed else "disabled"
+        )
+        self.btn_home.config(
+            state="normal" if DispenserState.HOMING in allowed else "disabled"
+        )
+        self.btn_init.config(
+            state="normal" if DispenserState.ON in allowed else "disabled"
+        )
 
         self.after(100, self.update_gui)
 
@@ -123,9 +140,13 @@ def start_gui(disp1: Dispenser, disp2: Dispenser, disp3: Dispenser):
     frame3 = DispenserFrame(root, disp3, "Dispenser 22")
     frame3.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
-    ttk.Button(root, text="Quit", command=root.destroy).grid(
-        row=3, column=0, pady=15
-    )
-
+    ttk.Button(root, text="Quit", command=root.destroy).grid(row=3, column=0, pady=15)
 
     root.mainloop()
+
+
+if __name__ == "__main__":
+    dispenser1: Dispenser = ...
+    dispenser2: Dispenser = ...
+    dispenser3: Dispenser = ...
+    start_gui(dispenser1, dispenser2, dispenser3)

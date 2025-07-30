@@ -1,6 +1,8 @@
+"""Dispenser core logic."""
+
 import logging
-import time
 import threading
+import time
 from enum import Enum, auto
 
 from . import control_table
@@ -9,6 +11,7 @@ from .dynamixel_controller import DynamixelController
 
 class DispenserState(Enum):
     """Possible dispenser states for the chip dispenser."""
+
     OFF = auto()
     ON = auto()
     IDLE = auto()
@@ -20,8 +23,16 @@ class DispenserState(Enum):
 
 ALLOWED_TRANSITIONS = {
     DispenserState.OFF: [DispenserState.ON, DispenserState.ERROR],
-    DispenserState.ON: [DispenserState.OFF, DispenserState.HOMING, DispenserState.ERROR],
-    DispenserState.HOMING: [DispenserState.OFF, DispenserState.IDLE, DispenserState.ERROR],
+    DispenserState.ON: [
+        DispenserState.OFF,
+        DispenserState.HOMING,
+        DispenserState.ERROR,
+    ],
+    DispenserState.HOMING: [
+        DispenserState.OFF,
+        DispenserState.IDLE,
+        DispenserState.ERROR,
+    ],
     DispenserState.IDLE: [
         DispenserState.OFF,
         DispenserState.LOADING,
@@ -37,13 +48,48 @@ ALLOWED_TRANSITIONS = {
 class Dispenser:
     """Stateful class for controlling a Dynamixel-based chip dispenser (thread-safe)."""
 
-    def __init__(self, motor_controller: DynamixelController, motor_id: int, lock: threading.Lock = None) -> None:
+    def __init__(
+        self,
+        motor_controller: DynamixelController,
+        motor_id: int,
+        lock: threading.Lock | None = None,
+    ) -> None:
         self.motor_controller = motor_controller
         self.motor_id = motor_id
         self.lock = lock  # shared lock for thread-safe access
-        self.chip_count = 0
-        self.state = DispenserState.OFF
+        self._chip_count = 0
+        self._state = DispenserState.OFF
         self.current_position = 0
+
+    @property
+    def state(self) -> DispenserState:
+        """Return the current state."""
+        return self._state
+
+    @state.setter
+    def state(self, new_state: DispenserState) -> None:
+        self._state = new_state
+
+    def set_state(self, new_state: DispenserState) -> bool:
+        """Attempt a state transition, return True if valid."""
+        allowed = ALLOWED_TRANSITIONS.get(self.state, [])
+        if new_state not in allowed:
+            logging.warning(
+                "Invalid transition: %s → %s", self.state.name, new_state.name
+            )
+            return False
+        self.state = new_state
+        return True
+
+    @property
+    def chip_count(self) -> int:
+        """Return the chip count."""
+        return self._chip_count
+
+    @chip_count.setter
+    def chip_count(self, new_chip_count: int) -> None:
+        """Return the chip count."""
+        self._chip_count = new_chip_count
 
     # ----------------- Utility -----------------
     def _with_lock(self, func, *args, **kwargs):
@@ -77,16 +123,6 @@ class Dispenser:
             time.sleep(0.01)
         return True
 
-    def set_state(self, new_state: DispenserState) -> bool:
-        """Attempt a state transition, return True if valid."""
-        allowed = ALLOWED_TRANSITIONS.get(self.state, [])
-        if new_state not in allowed:
-            logging.warning("Invalid transition: %s → %s", self.state.name, new_state.name)
-            return False
-        self.state = new_state
-        return True
-
-    # ----------------- Core Actions -----------------
     def home(self) -> None:
         """Move motor to its home position."""
         if not self.set_state(DispenserState.HOMING):
@@ -109,9 +145,7 @@ class Dispenser:
 
         if self.chip_count < quantity:
             logging.warning(
-                "Not enough chips to dispense %d. Only %d available.",
-                quantity,
-                self.chip_count,
+                "Trying to dispense %d out of %d available", quantity, self.chip_count
             )
         else:
             for _ in range(quantity):
@@ -128,6 +162,7 @@ class Dispenser:
 
     def load(self, quantity: int) -> None:
         """Load chips into the dispenser."""
+
         if not self.set_state(DispenserState.LOADING):
             return
 
@@ -144,6 +179,7 @@ class Dispenser:
 
     def initialize_motor(self, velocity: int = 300, acceleration: int = 30) -> None:
         """Reboot and configure the motor."""
+
         if not self.set_state(DispenserState.ON):
             return
 
@@ -154,7 +190,7 @@ class Dispenser:
             self._safe_write(control_table.PROFILE_VELOCITY, velocity)
             self._safe_write(control_table.PROFILE_ACCELERATION, acceleration)
             self._safe_write(control_table.TORQUE_ENABLE, 1)
-        except Exception as e:
+        except Exception as e:  # TODO: find more specific exception
             logging.warning("Failed to initialize motor %d: %s", self.motor_id, e)
             self.set_state(DispenserState.ERROR)
 
@@ -163,10 +199,3 @@ class Dispenser:
         """Set error state and log a message."""
         self.set_state(DispenserState.ERROR)
         logging.error("%s at motor %d", message, self.motor_id)
-
-    # ----------------- Getters -----------------
-    def get_state(self) -> DispenserState:
-        return self.state
-
-    def get_chip_count(self) -> int:
-        return self.chip_count
