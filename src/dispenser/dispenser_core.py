@@ -52,7 +52,7 @@ class Dispenser:
         self,
         motor_controller: DynamixelController,
         motor_id: int,
-        lock: threading.Lock = None,
+        lock: threading.Lock | None = None,
     ) -> None:
         self.motor_controller = motor_controller
         self.motor_id = motor_id
@@ -121,17 +121,6 @@ class Dispenser:
         while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
             # Optional: Check moving flag with self._safe_read(control_table.MOVING)
             time.sleep(0.01)
-        return True
-
-    def _interlock_motion(self) -> bool:
-        """Wait until motion completes or timeout expires."""
-
-        start_time = time.time()
-        while time.time() - start_time < control_table.DISPENSE_TIMEOUT:
-            # if self.motor_controller.read(self.motor_id, control_table.MOVING) == 0:
-            #     return True
-            time.sleep(0.01)
-        # return False
         return True
 
     def home(self) -> None:
