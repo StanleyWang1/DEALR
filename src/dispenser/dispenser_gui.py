@@ -100,8 +100,8 @@ class DispenserFrame(ttk.Frame):
 
     # ---------- GUI Updater ----------
     def update_gui(self):
-        self.chip_label.config(text=f"Chips: {self.dispenser.get_chip_count()}")
-        state = self.dispenser.get_state()
+        self.chip_label.config(text=f"Chips: {self.dispenser.chip_count}")
+        state = self.dispenser.state
         self.state_label.config(text=f"State: {state.name}")
         self.state_label.config(foreground=self.color_map.get(state.name, "black"))
 
