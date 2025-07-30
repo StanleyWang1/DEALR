@@ -122,24 +122,28 @@ class DispenserFrame(ttk.Frame):
         self.after(100, self.update_gui)
 
 
-def start_gui(disp1: Dispenser, disp2: Dispenser):
+def start_gui(disp1: Dispenser, disp2: Dispenser, disp3: Dispenser):
     root = tk.Tk()
-    root.title("Dual Dispenser Control Panel")
+    root.title("Triple Dispenser Control Panel")
 
     style = ttk.Style()
     style.configure("TButton", font=("Avenir", 14))
     style.configure("TLabel", font=("Avenir", 14))
 
-    # Two Dispensers Side by Side
+    # Three Dispensers Side by Side
     frame1 = DispenserFrame(root, disp1, "Dispenser 20")
-    frame1.grid(row=0, column=0, padx=20, pady=10)
+    frame1.grid(row=0, column=0, padx=20, pady=10, sticky="ew")
 
     frame2 = DispenserFrame(root, disp2, "Dispenser 21")
-    frame2.grid(row=0, column=1, padx=20, pady=10)
+    frame2.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+
+    frame3 = DispenserFrame(root, disp3, "Dispenser 22")
+    frame3.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
     ttk.Button(root, text="Quit", command=root.destroy).grid(
-        row=1, column=0, columnspan=2, pady=15
+        row=3, column=0, pady=15
     )
+
 
     root.mainloop()
 
