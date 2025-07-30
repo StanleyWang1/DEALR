@@ -140,10 +140,7 @@ def start_gui(disp1: Dispenser, disp2: Dispenser, disp3: Dispenser):
     frame3 = DispenserFrame(root, disp3, "Dispenser 22")
     frame3.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
-    ttk.Button(root, text="Quit", command=root.destroy).grid(
-        row=3, column=0, pady=15
-    )
-
+    ttk.Button(root, text="Quit", command=root.destroy).grid(row=3, column=0, pady=15)
 
     root.mainloop()
 
@@ -151,4 +148,5 @@ def start_gui(disp1: Dispenser, disp2: Dispenser, disp3: Dispenser):
 if __name__ == "__main__":
     dispenser1: Dispenser = ...
     dispenser2: Dispenser = ...
-    start_gui(dispenser1, dispenser2)
+    dispenser3: Dispenser = ...
+    start_gui(dispenser1, dispenser2, dispenser3)

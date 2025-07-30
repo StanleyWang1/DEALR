@@ -1,8 +1,8 @@
 """Dispenser core logic."""
 
 import logging
-import time
 import threading
+import time
 from enum import Enum, auto
 
 from . import control_table
@@ -11,6 +11,7 @@ from .dynamixel_controller import DynamixelController
 
 class DispenserState(Enum):
     """Possible dispenser states for the chip dispenser."""
+
     OFF = auto()
     ON = auto()
     IDLE = auto()
@@ -22,8 +23,16 @@ class DispenserState(Enum):
 
 ALLOWED_TRANSITIONS = {
     DispenserState.OFF: [DispenserState.ON, DispenserState.ERROR],
-    DispenserState.ON: [DispenserState.OFF, DispenserState.HOMING, DispenserState.ERROR],
-    DispenserState.HOMING: [DispenserState.OFF, DispenserState.IDLE, DispenserState.ERROR],
+    DispenserState.ON: [
+        DispenserState.OFF,
+        DispenserState.HOMING,
+        DispenserState.ERROR,
+    ],
+    DispenserState.HOMING: [
+        DispenserState.OFF,
+        DispenserState.IDLE,
+        DispenserState.ERROR,
+    ],
     DispenserState.IDLE: [
         DispenserState.OFF,
         DispenserState.LOADING,
@@ -39,7 +48,12 @@ ALLOWED_TRANSITIONS = {
 class Dispenser:
     """Stateful class for controlling a Dynamixel-based chip dispenser (thread-safe)."""
 
-    def __init__(self, motor_controller: DynamixelController, motor_id: int, lock: threading.Lock = None) -> None:
+    def __init__(
+        self,
+        motor_controller: DynamixelController,
+        motor_id: int,
+        lock: threading.Lock = None,
+    ) -> None:
         self.motor_controller = motor_controller
         self.motor_id = motor_id
         self.lock = lock  # shared lock for thread-safe access
@@ -60,7 +74,9 @@ class Dispenser:
         """Attempt a state transition, return True if valid."""
         allowed = ALLOWED_TRANSITIONS.get(self.state, [])
         if new_state not in allowed:
-            logging.warning("Invalid transition: %s → %s", self.state.name, new_state.name)
+            logging.warning(
+                "Invalid transition: %s → %s", self.state.name, new_state.name
+            )
             return False
         self.state = new_state
         return True
