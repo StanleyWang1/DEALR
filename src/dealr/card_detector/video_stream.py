@@ -6,8 +6,7 @@ import cv2
 
 def main() -> None:
     # Load a pretrained model
-    # model_path = Path("models") / "best.pt"
-    model_path = "./src/card_detector/models/best.pt"
+    model_path = Path("models") / "best.pt"
     model = YOLO(model_path)
 
     # Initialize camera (0 = default webcam)
