@@ -1,6 +1,8 @@
-import pygame
 import tkinter as tk
 from tkinter import ttk
+
+import pygame
+
 
 def update_joystick_state():
     pygame.event.pump()
@@ -10,7 +12,9 @@ def update_joystick_state():
     axes_label.config(text="\n".join(axes_values))
 
     # Get buttons
-    buttons_values = [f"Button {i}: {js.get_button(i)}" for i in range(js.get_numbuttons())]
+    buttons_values = [
+        f"Button {i}: {js.get_button(i)}" for i in range(js.get_numbuttons())
+    ]
     buttons_label.config(text="\n".join(buttons_values))
 
     # Get hats
@@ -18,6 +22,7 @@ def update_joystick_state():
     hats_label.config(text="\n".join(hats_values))
 
     root.after(100, update_joystick_state)  # update every 100 ms
+
 
 # Initialize pygame joystick
 pygame.init()

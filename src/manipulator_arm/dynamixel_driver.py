@@ -1,11 +1,11 @@
-from dynamixel_sdk import *
-import numpy as np
 import time
 
+import numpy as np
 from control_table import *
 from dynamixel_controller import DynamixelController
-
+from dynamixel_sdk import *
 from kinematics import num_forward_kinematics, num_jacobian
+
 # Motor IDs
 JOINT1 = 12
 JOINT2 = 13
@@ -14,20 +14,32 @@ JOINT4 = 15
 DISPENSER1 = 20
 DISPENSER2 = 21
 
+
 def dynamixel_connect():
     # Initialize controller
-    controller = DynamixelController('COM8', 1000000, 2.0)
-    group_sync_write = GroupSyncWrite(controller.port_handler, controller.packet_handler, GOAL_POSITION[0], GOAL_POSITION[1])
+    controller = DynamixelController("COM8", 1000000, 2.0)
+    group_sync_write = GroupSyncWrite(
+        controller.port_handler,
+        controller.packet_handler,
+        GOAL_POSITION[0],
+        GOAL_POSITION[1],
+    )
     # group_sync_read = GroupSyncRead(controller.port_handler, controller.packet_handler, PRESENT_POSITION[0], PRESENT_POSITION[1])
-    
+
     # --------------------------------------------------
     # Reboot WRIST motors to ensure clean startup
     for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4, DISPENSER1, DISPENSER2]:
-        dxl_comm_result, dxl_error = controller.packet_handler.reboot(controller.port_handler, motor_id)
+        dxl_comm_result, dxl_error = controller.packet_handler.reboot(
+            controller.port_handler, motor_id
+        )
         if dxl_comm_result != COMM_SUCCESS:
-            print(f"Failed to reboot Motor {motor_id}: {controller.packet_handler.getTxRxResult(dxl_comm_result)}")
+            print(
+                f"Failed to reboot Motor {motor_id}: {controller.packet_handler.getTxRxResult(dxl_comm_result)}"
+            )
         elif dxl_error != 0:
-            print(f"Error rebooting Motor {motor_id}: {controller.packet_handler.getRxPacketError(dxl_error)}")
+            print(
+                f"Error rebooting Motor {motor_id}: {controller.packet_handler.getRxPacketError(dxl_error)}"
+            )
         else:
             print(f"Motor {motor_id} rebooted successfully.")
 
@@ -56,11 +68,20 @@ def dynamixel_connect():
 
     return controller, group_sync_write
 
+
 def dynamixel_drive(controller, group_sync_write, ticks):
-    param_success = group_sync_write.addParam(JOINT1, ticks[0].to_bytes(4, 'little', signed=True))
-    param_success &= group_sync_write.addParam(JOINT2, ticks[1].to_bytes(4, 'little', signed=True))
-    param_success &= group_sync_write.addParam(JOINT3, ticks[2].to_bytes(4, 'little', signed=True))
-    param_success &= group_sync_write.addParam(JOINT4, ticks[3].to_bytes(4, 'little', signed=True))
+    param_success = group_sync_write.addParam(
+        JOINT1, ticks[0].to_bytes(4, "little", signed=True)
+    )
+    param_success &= group_sync_write.addParam(
+        JOINT2, ticks[1].to_bytes(4, "little", signed=True)
+    )
+    param_success &= group_sync_write.addParam(
+        JOINT3, ticks[2].to_bytes(4, "little", signed=True)
+    )
+    param_success &= group_sync_write.addParam(
+        JOINT4, ticks[3].to_bytes(4, "little", signed=True)
+    )
 
     if not param_success:
         print("Failed to add parameters for SyncWrite")
@@ -68,11 +89,14 @@ def dynamixel_drive(controller, group_sync_write, ticks):
 
     dxl_comm_result = group_sync_write.txPacket()
     if dxl_comm_result != COMM_SUCCESS:
-        print(f"SyncWrite communication error: {controller.packet_handler.getTxRxResult(dxl_comm_result)}")
+        print(
+            f"SyncWrite communication error: {controller.packet_handler.getTxRxResult(dxl_comm_result)}"
+        )
         return False
 
     group_sync_write.clearParam()
     return True
+
 
 def dynamixel_disconnect(controller):
     # Torque OFF all motors individually (simple)
@@ -82,25 +106,33 @@ def dynamixel_disconnect(controller):
     controller.write(JOINT4, TORQUE_ENABLE, 0)
     # controller.port_handler.closePort()
 
+
 def radians_to_ticks(rad):
     return int(rad / (2 * np.pi) * 4096)
+
 
 def ticks_to_radians(ticks):
     return ticks / 4096 * 2 * np.pi
 
+
 def main():
     controller, group_sync_write = dynamixel_connect()
     print("\033[93mDYNAMIXEL: Motors Connected, Driving to Home (5 sec)\033[0m")
-    
+
     # Set temporary velocity limit
     for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4]:
         controller.write(motor_id, PROFILE_VELOCITY, 30)
-    home = [0.0, np.pi/2, -np.pi/2, 0]
-    dynamixel_drive(controller, group_sync_write, 
-                    [MOTOR12_HOME + radians_to_ticks(home[0]),
-                     MOTOR13_HOME + radians_to_ticks(home[1]), 
-                     MOTOR14_HOME - radians_to_ticks(home[2]), # motor flipped direction
-                     MOTOR15_HOME + radians_to_ticks(home[3])])
+    home = [0.0, np.pi / 2, -np.pi / 2, 0]
+    dynamixel_drive(
+        controller,
+        group_sync_write,
+        [
+            MOTOR12_HOME + radians_to_ticks(home[0]),
+            MOTOR13_HOME + radians_to_ticks(home[1]),
+            MOTOR14_HOME - radians_to_ticks(home[2]),  # motor flipped direction
+            MOTOR15_HOME + radians_to_ticks(home[3]),
+        ],
+    )
     time.sleep(5)
     # Remove velocity limit
     for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4]:
@@ -112,16 +144,18 @@ def main():
     dynamixel_disconnect(controller)
 
     while True:
-        joint_pos = [ticks_to_radians(controller.read(JOINT1, PRESENT_POSITION) - MOTOR12_HOME),
-                    ticks_to_radians(controller.read(JOINT2, PRESENT_POSITION) - MOTOR13_HOME),
-                    -ticks_to_radians(controller.read(JOINT3, PRESENT_POSITION) - MOTOR14_HOME),
-                    ticks_to_radians(controller.read(JOINT4, PRESENT_POSITION) - MOTOR15_HOME)]
+        joint_pos = [
+            ticks_to_radians(controller.read(JOINT1, PRESENT_POSITION) - MOTOR12_HOME),
+            ticks_to_radians(controller.read(JOINT2, PRESENT_POSITION) - MOTOR13_HOME),
+            -ticks_to_radians(controller.read(JOINT3, PRESENT_POSITION) - MOTOR14_HOME),
+            ticks_to_radians(controller.read(JOINT4, PRESENT_POSITION) - MOTOR15_HOME),
+        ]
         FK_num = num_forward_kinematics(joint_pos)
-        print(np.round(FK_num[:3,3], 2))
+        print(np.round(FK_num[:3, 3], 2))
         time.sleep(0.1)
-        
+
     print("\033[93mDYNAMIXEL: Motors Disconnected, Torque Off\033[0m")
+
 
 if __name__ == "__main__":
     main()
-

@@ -1,13 +1,16 @@
-import numpy as np
-import time
 import threading
+import time
 
 import control_table
+import numpy as np
 from dynamixel_driver import (
-    dynamixel_connect, dynamixel_drive, dynamixel_disconnect,
-    radians_to_ticks, ticks_to_radians
+    dynamixel_connect,
+    dynamixel_disconnect,
+    dynamixel_drive,
+    radians_to_ticks,
+    ticks_to_radians,
 )
-from joystick_driver import joystick_connect, joystick_read, joystick_disconnect
+from joystick_driver import joystick_connect, joystick_disconnect, joystick_read
 from kinematics import num_forward_kinematics, num_jacobian
 
 
@@ -54,7 +57,7 @@ def robot_main_loop(state: RobotState):
     d2 = control_table.MOTOR21_HOME
 
     # Home joints
-    home_q = np.array([0.0, np.pi/2, -np.pi/2, 0])
+    home_q = np.array([0.0, np.pi / 2, -np.pi / 2, 0])
     ticks = [
         control_table.MOTOR12_HOME + radians_to_ticks(home_q[0]),
         control_table.MOTOR13_HOME + radians_to_ticks(home_q[1]),
@@ -76,9 +79,12 @@ def robot_main_loop(state: RobotState):
     # Autonomous waypoints
     waypoints = [
         ("move", np.array([0.25, 0.0, 0.12])),
-        ("move", np.array([0.06, 0.275, 0.12])), ("dispense1", None),
-        ("move", np.array([0.21, 0.27, 0.12])), ("dispense2", None),
-        ("move", np.array([0.25, 0.0, 0.12])), ("drop", None),
+        ("move", np.array([0.06, 0.275, 0.12])),
+        ("dispense1", None),
+        ("move", np.array([0.21, 0.27, 0.12])),
+        ("dispense2", None),
+        ("move", np.array([0.25, 0.0, 0.12])),
+        ("drop", None),
     ]
 
     Kp = 2.0
@@ -111,14 +117,24 @@ def robot_main_loop(state: RobotState):
 
                         # Compute motor ticks
                         ticks_cmd = [
-                            joint_limit(JOINTS[0], control_table.MOTOR12_HOME + radians_to_ticks(q[0])),
-                            joint_limit(JOINTS[1], control_table.MOTOR13_HOME + radians_to_ticks(q[1])),
-                            joint_limit(JOINTS[2], control_table.MOTOR14_HOME - radians_to_ticks(q[2])),
+                            joint_limit(
+                                JOINTS[0],
+                                control_table.MOTOR12_HOME + radians_to_ticks(q[0]),
+                            ),
+                            joint_limit(
+                                JOINTS[1],
+                                control_table.MOTOR13_HOME + radians_to_ticks(q[1]),
+                            ),
+                            joint_limit(
+                                JOINTS[2],
+                                control_table.MOTOR14_HOME - radians_to_ticks(q[2]),
+                            ),
                             joint_limit(
                                 JOINTS[3],
-                                control_table.MOTOR15_HOME + radians_to_ticks(q[3])
-                                - (500 if not state.payload_mode else 0)
-                            )
+                                control_table.MOTOR15_HOME
+                                + radians_to_ticks(q[3])
+                                - (500 if not state.payload_mode else 0),
+                            ),
                         ]
 
                         dynamixel_drive(controller, group_sync_write, ticks_cmd)
@@ -138,10 +154,22 @@ def robot_main_loop(state: RobotState):
                     state.payload_mode = False
                     # Send updated gripper position immediately
                     ticks_cmd = [
-                        joint_limit(JOINTS[0], control_table.MOTOR12_HOME + radians_to_ticks(q[0])),
-                        joint_limit(JOINTS[1], control_table.MOTOR13_HOME + radians_to_ticks(q[1])),
-                        joint_limit(JOINTS[2], control_table.MOTOR14_HOME - radians_to_ticks(q[2])),
-                        joint_limit(JOINTS[3], control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - 500)
+                        joint_limit(
+                            JOINTS[0],
+                            control_table.MOTOR12_HOME + radians_to_ticks(q[0]),
+                        ),
+                        joint_limit(
+                            JOINTS[1],
+                            control_table.MOTOR13_HOME + radians_to_ticks(q[1]),
+                        ),
+                        joint_limit(
+                            JOINTS[2],
+                            control_table.MOTOR14_HOME - radians_to_ticks(q[2]),
+                        ),
+                        joint_limit(
+                            JOINTS[3],
+                            control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - 500,
+                        ),
                     ]
                     dynamixel_drive(controller, group_sync_write, ticks_cmd)
                     time.sleep(1.0)

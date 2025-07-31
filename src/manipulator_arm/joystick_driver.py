@@ -1,5 +1,7 @@
-import pygame
 import time
+
+import pygame
+
 
 def joystick_connect():
     pygame.init()
@@ -9,6 +11,7 @@ def joystick_connect():
     js = pygame.joystick.Joystick(0)
     js.init()
     return js
+
 
 def joystick_read(js):
     def apply_deadzone(value, deadzone=0.1):
@@ -30,27 +33,25 @@ def joystick_read(js):
         "LY": apply_deadzone(ly_raw),
         "RX": apply_deadzone(rx_raw),
         "RY": apply_deadzone(ry_raw),
-
         # Triggers (remap from [-1,1] to [0,1] and apply deadzone)
         "LT": apply_deadzone((lt_raw + 1) / 2),
         "RT": apply_deadzone((rt_raw + 1) / 2),
-
         # Face buttons
         "AB": js.get_button(0),  # A
         "BB": js.get_button(1),  # B
         "XB": js.get_button(2),  # X
         "YB": js.get_button(3),  # Y
-
         # Bumpers
         "LB": js.get_button(4),
         "RB": js.get_button(5),
-
         # D-pad (hat returns a tuple like (0, 1) = up)
-        "DPAD": js.get_hat(0)
+        "DPAD": js.get_hat(0),
     }
+
 
 def joystick_disconnect(js):
     js.quit()
+
 
 # Optional: test
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 """Symbolic and numerical kinematics using modified DH parameters."""
 
+import time
+
 import numpy as np
 import sympy as sp
-import time
 
 # -------------------- CONSTANTS --------------------
 L1_CONST = 0.08545  # Link 1 length [m]
@@ -14,11 +15,12 @@ th1, th2, th3, th4 = sp.symbols("th1 th2 th3 th4", real=True)
 
 # Modified DH parameters
 MDH_sym = {
-    1: {"a": 0,         "al": 0,            "d": L1_CONST,  "th": th1},
-    2: {"a": 0,         "al": sp.pi / 2,    "d": 0,         "th": th2},
-    3: {"a": L2_CONST,  "al": 0,            "d": 0,         "th": th3},
-    4: {"a": L3_CONST,  "al": 0,            "d": 0,         "th": th4},
+    1: {"a": 0, "al": 0, "d": L1_CONST, "th": th1},
+    2: {"a": 0, "al": sp.pi / 2, "d": 0, "th": th2},
+    3: {"a": L2_CONST, "al": 0, "d": 0, "th": th3},
+    4: {"a": L3_CONST, "al": 0, "d": 0, "th": th4},
 }
+
 
 def sym_MDH_forward(dh_param: dict) -> sp.Matrix:
     """Return the symbolic homogeneous transform for a link using modified DH parameters."""
@@ -27,12 +29,24 @@ def sym_MDH_forward(dh_param: dict) -> sp.Matrix:
     d = dh_param["d"]  # d(i)
     th = dh_param["th"]  # theta(i)
 
-    return sp.Matrix([
-        [sp.cos(th), -sp.sin(th), 0, a],
-        [sp.sin(th)*sp.cos(al), sp.cos(th)*sp.cos(al), -sp.sin(al), -sp.sin(al)*d],
-        [sp.sin(th)*sp.sin(al), sp.cos(th)*sp.sin(al), sp.cos(al), sp.cos(al)*d],
-        [0, 0, 0, 1],
-    ])
+    return sp.Matrix(
+        [
+            [sp.cos(th), -sp.sin(th), 0, a],
+            [
+                sp.sin(th) * sp.cos(al),
+                sp.cos(th) * sp.cos(al),
+                -sp.sin(al),
+                -sp.sin(al) * d,
+            ],
+            [
+                sp.sin(th) * sp.sin(al),
+                sp.cos(th) * sp.sin(al),
+                sp.cos(al),
+                sp.cos(al) * d,
+            ],
+            [0, 0, 0, 1],
+        ]
+    )
 
 
 def sym_forward_kinematics(mdh: dict) -> sp.Matrix:
@@ -40,15 +54,10 @@ def sym_forward_kinematics(mdh: dict) -> sp.Matrix:
     T = sp.eye(4)
     for i in sorted(mdh.keys()):
         T @= sym_MDH_forward(mdh[i])
-    
+
     # Wrist (chip scoop offset)
-    T @= sp.Matrix([
-        [1, 0, 0, 0.1],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ])
-    
+    T @= sp.Matrix([[1, 0, 0, 0.1], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+
     return T
 
 
@@ -56,11 +65,13 @@ def sym_jacobian_linear(T: sp.Matrix) -> sp.Matrix:
     """Compute the symbolic linear velocity Jacobian."""
     x, y, z = T[0, 3], T[1, 3], T[2, 3]
 
-    return sp.Matrix([
-        [x.diff(th1), x.diff(th2), x.diff(th3), x.diff(th4)],
-        [y.diff(th1), y.diff(th2), y.diff(th3), y.diff(th4)],
-        [z.diff(th1), z.diff(th2), z.diff(th3), z.diff(th4)],
-    ])
+    return sp.Matrix(
+        [
+            [x.diff(th1), x.diff(th2), x.diff(th3), x.diff(th4)],
+            [y.diff(th1), y.diff(th2), y.diff(th3), y.diff(th4)],
+            [z.diff(th1), z.diff(th2), z.diff(th3), z.diff(th4)],
+        ]
+    )
 
 
 def sym_jacobian_angular(mdh: dict) -> sp.Matrix:
