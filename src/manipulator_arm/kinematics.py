@@ -40,6 +40,15 @@ def sym_forward_kinematics(mdh: dict) -> sp.Matrix:
     T = sp.eye(4)
     for i in sorted(mdh.keys()):
         T @= sym_MDH_forward(mdh[i])
+    
+    # Wrist (chip scoop offset)
+    T @= sp.Matrix([
+        [1, 0, 0, 0.1],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ])
+    
     return T
 
 

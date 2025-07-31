@@ -11,16 +11,18 @@ JOINT1 = 12
 JOINT2 = 13
 JOINT3 = 14
 JOINT4 = 15
+DISPENSER1 = 20
+DISPENSER2 = 21
 
 def dynamixel_connect():
     # Initialize controller
     controller = DynamixelController('COM8', 1000000, 2.0)
     group_sync_write = GroupSyncWrite(controller.port_handler, controller.packet_handler, GOAL_POSITION[0], GOAL_POSITION[1])
-    group_sync_read = GroupSyncRead(controller.port_handler, controller.packet_handler, PRESENT_POSITION[0], PRESENT_POSITION[1])
+    # group_sync_read = GroupSyncRead(controller.port_handler, controller.packet_handler, PRESENT_POSITION[0], PRESENT_POSITION[1])
     
     # --------------------------------------------------
     # Reboot WRIST motors to ensure clean startup
-    for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4]:
+    for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4, DISPENSER1, DISPENSER2]:
         dxl_comm_result, dxl_error = controller.packet_handler.reboot(controller.port_handler, motor_id)
         if dxl_comm_result != COMM_SUCCESS:
             print(f"Failed to reboot Motor {motor_id}: {controller.packet_handler.getTxRxResult(dxl_comm_result)}")
@@ -37,6 +39,8 @@ def dynamixel_connect():
     controller.write(JOINT2, OPERATING_MODE, 4)
     controller.write(JOINT3, OPERATING_MODE, 4)
     controller.write(JOINT4, OPERATING_MODE, 4)
+    controller.write(DISPENSER1, OPERATING_MODE, 4)
+    controller.write(DISPENSER2, OPERATING_MODE, 4)
     time.sleep(0.1)
     # Optional: Force Limit on Gripper
     # controller.WRITE(GRIPPER, PWM_LIMIT, 250)
@@ -45,10 +49,12 @@ def dynamixel_connect():
     controller.write(JOINT1, TORQUE_ENABLE, 1)
     controller.write(JOINT2, TORQUE_ENABLE, 1)
     controller.write(JOINT3, TORQUE_ENABLE, 1)
-    controller.write(JOINT4, TORQUE_ENABLE, 1)  # Gripper torque off for now
+    controller.write(JOINT4, TORQUE_ENABLE, 1)
+    controller.write(DISPENSER1, TORQUE_ENABLE, 1)
+    controller.write(DISPENSER2, TORQUE_ENABLE, 1)
     time.sleep(0.1)
 
-    return controller, group_sync_write, group_sync_read
+    return controller, group_sync_write
 
 def dynamixel_drive(controller, group_sync_write, ticks):
     param_success = group_sync_write.addParam(JOINT1, ticks[0].to_bytes(4, 'little', signed=True))
