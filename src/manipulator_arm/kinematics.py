@@ -71,7 +71,7 @@ def sym_jacobian_angular(mdh: dict) -> sp.Matrix:
     # z-axes in base frame
     z1 = T01_cum[:3, 2]
     z2 = T02_cum[:3, 2]
-    z3 = sp.zeros(3, 1)  # Prismatic joint → no angular velocity
+    z3 = T03_cum[:3, 2]
     z4 = T04_cum[:3, 2]
 
     return sp.Matrix.hstack(z1, z2, z3, z4)

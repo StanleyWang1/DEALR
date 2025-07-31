@@ -16,7 +16,8 @@ def dynamixel_connect():
     # Initialize controller
     controller = DynamixelController('COM8', 1000000, 2.0)
     group_sync_write = GroupSyncWrite(controller.port_handler, controller.packet_handler, GOAL_POSITION[0], GOAL_POSITION[1])
-
+    group_sync_read = GroupSyncRead(controller.port_handler, controller.packet_handler, PRESENT_POSITION[0], PRESENT_POSITION[1])
+    
     # --------------------------------------------------
     # Reboot WRIST motors to ensure clean startup
     for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4]:
@@ -47,7 +48,7 @@ def dynamixel_connect():
     controller.write(JOINT4, TORQUE_ENABLE, 1)  # Gripper torque off for now
     time.sleep(0.1)
 
-    return controller, group_sync_write
+    return controller, group_sync_write, group_sync_read
 
 def dynamixel_drive(controller, group_sync_write, ticks):
     param_success = group_sync_write.addParam(JOINT1, ticks[0].to_bytes(4, 'little', signed=True))
