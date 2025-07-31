@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from dynamixel_sdk import COMM_SUCCESS, GroupSyncWrite
+from dynamixel_sdk import COMM_SUCCESS, GroupSyncWrite  # type: ignore
 
 from ..motor.dynamixel_controller import DynamixelController
 from .control_table import (
