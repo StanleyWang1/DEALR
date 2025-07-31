@@ -1,17 +1,18 @@
 import threading
 import time
 
-import control_table
 import numpy as np
-from dynamixel_driver import (
+
+from . import control_table
+from .dynamixel_driver import (
     dynamixel_connect,
     dynamixel_disconnect,
     dynamixel_drive,
     radians_to_ticks,
     ticks_to_radians,
 )
-from joystick_driver import joystick_connect, joystick_disconnect, joystick_read
-from kinematics import num_forward_kinematics, num_jacobian
+from .joystick_driver import joystick_connect, joystick_disconnect, joystick_read
+from .kinematics import num_forward_kinematics, num_jacobian
 
 # Global Variables
 running = True
