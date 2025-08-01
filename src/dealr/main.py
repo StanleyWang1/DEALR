@@ -1,21 +1,30 @@
-from pathlib import Path
+"""Main driver for DEALR stack."""
+
+import argparse
 import threading
 import time
+from pathlib import Path
 
 import tomli
 
-import dealr.card_detector.server as cd_server
 import dealr.blackjack.server as bj_server
+import dealr.card_detector.server as cd_server
 
 
 def main() -> None:
+    """Spawns all necessary threads."""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num-players", type=int, default=1, required=False)
+    args = parser.parse_args()
+
     ports_file = Path("ports.toml")
     ports = tomli.loads(ports_file.read_text(encoding="utf-8"))
     card_detector_pub = threading.Thread(
-        target=cd_server.serve, args=(1, ports["card-detector"]), daemon=True
+        target=cd_server.serve, args=(args.num_players, ports["card-detector"]), daemon=True
     )
     blackjack_logic = threading.Thread(
-        target=bj_server.serve, args=(1, ports["card-detector"]), daemon=True
+        target=bj_server.serve, args=(args.num_players, ports["card-detector"]), daemon=True
     )
 
     card_detector_pub.start()
