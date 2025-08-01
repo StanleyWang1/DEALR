@@ -16,6 +16,7 @@ from .kinematics import num_forward_kinematics, num_jacobian
 
 # Global Variables
 running = True
+autonomous_mode = False
 running_lock = threading.Lock()
 
 task_velocity = np.zeros((4,))
@@ -80,42 +81,37 @@ def dispenser_control():
 
 def motor_control():
     def joint_limit(motor_id, ticks):
-        min_ticks = control_table.JOINT_LIMITS[motor_id][0]
-        max_ticks = control_table.JOINT_LIMITS[motor_id][1]
-        return min(max_ticks, (max(min_ticks, ticks)))
+        min_ticks, max_ticks = control_table.JOINT_LIMITS[motor_id]
+        return min(max_ticks, max(min_ticks, ticks))
 
     def damped_pinv(J, damping=0.01):
-        n = J.shape[1]  # number of columns (joints)
+        n = J.shape[1]
         return np.linalg.inv(J.T @ J + (damping**2) * np.eye(n)) @ J.T
 
     global running, controller, task_velocity, motor_pos, payload_mode
 
     # Motor IDs
-    JOINT1 = 12
-    JOINT2 = 13
-    JOINT3 = 14
-    JOINT4 = 15
+    JOINT1, JOINT2, JOINT3, JOINT4 = 12, 13, 14, 15
 
-    # Set temporary velocity limit
+    # Initial velocity limits
     for motor_id in [JOINT1, JOINT2, JOINT3, JOINT4]:
         with controller_lock:
             controller.write(motor_id, control_table.PROFILE_VELOCITY, 30)
 
-    home = np.array([0.0, np.pi / 2, -np.pi / 2, 0])
-    q = home
+    # Home configuration
+    q = np.array([0.0, np.pi / 2, -np.pi / 2, 0])
     ticks = [
-        control_table.MOTOR12_HOME + radians_to_ticks(home[0]),
-        control_table.MOTOR13_HOME + radians_to_ticks(home[1]),
-        control_table.MOTOR14_HOME
-        - radians_to_ticks(home[2]),  # motor flipped direction
-        control_table.MOTOR15_HOME + radians_to_ticks(home[3]),
+        control_table.MOTOR12_HOME + radians_to_ticks(q[0]),
+        control_table.MOTOR13_HOME + radians_to_ticks(q[1]),
+        control_table.MOTOR14_HOME - radians_to_ticks(q[2]),
+        control_table.MOTOR15_HOME + radians_to_ticks(q[3]),
     ]
 
     with controller_lock:
         dynamixel_drive(controller, group_sync_write, ticks)
     time.sleep(4)
 
-    # Remove velocity limit
+    # Remove velocity limits
     for motor_id in [JOINT1, JOINT2, JOINT3]:
         with controller_lock:
             controller.write(motor_id, control_table.PROFILE_VELOCITY, 0)
@@ -124,6 +120,8 @@ def motor_control():
 
     try:
         prev_time = time.perf_counter()
+        last_drive_time = prev_time
+        i = 0
 
         while True:
             with running_lock:
@@ -132,13 +130,18 @@ def motor_control():
 
             start = time.perf_counter()
             dt = start - prev_time
-            print(f"Loop execution time: {dt * 1000:.2f} [ms]")
             prev_time = start
 
+            if i % 100 == 0:
+                print(f"Loop execution time: {dt * 1000:.2f} [ms]")
+            i += 1
+
+            # Copy task velocity
             with task_velocity_lock:
                 v_task = task_velocity.copy()
 
-            if not np.all(v_task == 0.0):  # active task velocity commanded
+            # Compute new joint state if velocity is commanded
+            if not np.all(v_task == 0.0):
                 J = num_jacobian(q)
                 J_inv = damped_pinv(J)
                 q_dot = J_inv @ v_task
@@ -147,31 +150,49 @@ def motor_control():
                 with motor_pos_lock:
                     motor_pos = q
 
-                ticks[0] = joint_limit(
+            # Compute new ticks
+            new_ticks = [
+                joint_limit(
                     JOINT1, control_table.MOTOR12_HOME + radians_to_ticks(q[0])
-                )
-                ticks[1] = joint_limit(
+                ),
+                joint_limit(
                     JOINT2, control_table.MOTOR13_HOME + radians_to_ticks(q[1])
-                )
-                ticks[2] = joint_limit(
+                ),
+                joint_limit(
                     JOINT3, control_table.MOTOR14_HOME - radians_to_ticks(q[2])
-                )
+                ),
+                0,  # placeholder for JOINT4
+            ]
 
             with payload_mode_lock:
                 if payload_mode:
-                    ticks[3] = joint_limit(
+                    new_ticks[3] = joint_limit(
                         JOINT4, control_table.MOTOR15_HOME + radians_to_ticks(q[3])
                     )
                 else:
-                    ticks[3] = joint_limit(
+                    new_ticks[3] = joint_limit(
                         JOINT4,
-                        control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - 500,
+                        control_table.MOTOR15_HOME
+                        + radians_to_ticks(q[3])
+                        - control_table.PAYLOAD_STEP,
                     )
 
-            with controller_lock:
-                dynamixel_drive(controller, group_sync_write, ticks)
+            now = time.perf_counter()
 
-            time.sleep(0.01)  # time for motor to move
+            # Send new command if ticks changed OR every 50 ms as a refresh
+            if not np.allclose(new_ticks, ticks, atol=1) or (
+                now - last_drive_time > 0.05
+            ):
+                ticks = new_ticks.copy()
+                with controller_lock:
+                    dynamixel_drive(controller, group_sync_write, ticks)
+                last_drive_time = now
+
+            # Maintain consistent loop timing
+            elapsed = time.perf_counter() - start
+            sleep_time = max(0.0, 0.005 - elapsed)
+            time.sleep(sleep_time)
+
     finally:
         with controller_lock:
             dynamixel_disconnect(controller)
@@ -225,28 +246,34 @@ def motor_monitor():
 
 
 def autonomous_sequencer():
-    global running, task_velocity, motor_pos, dispense_request, payload_mode
+    global \
+        running, \
+        autonomous_mode, \
+        task_velocity, \
+        motor_pos, \
+        dispense_request, \
+        payload_mode
 
-    JOINT1, JOINT2, JOINT3, JOINT4 = 12, 13, 14, 15
     waypoints = [
-        ("move", np.array([0.25, 0.0, 0.12])),  # bowl
-        ("move", np.array([0.06, 0.275, 0.12])),  # dispenser 1
+        ("move", np.array([0.24, 0.0, 0.09])),  # bowl
+        ("move", np.array([0.022, 0.285, 0.13])),  # dispenser 1
         ("dispense1", None),
-        ("move", np.array([0.21, 0.27, 0.12])),  # dispenser 2
+        ("move", np.array([0.17, 0.285, 0.13])),  # dispenser 2
         ("dispense2", None),
         ("move", np.array([0.25, 0.0, 0.12])),  # bowl
         ("drop", None),
     ]
 
-    Kp = 1.0  # proportional gain for Cartesian velocity
+    Kp = 3.0  # proportional gain for Cartesian velocity
 
     while running:
         for action, target in waypoints:
             start_time = time.time()
-
             if action == "move":
                 # move for 2 sec toward target
-                while time.time() - start_time < 5.0 and running:
+                while autonomous_mode:
+                    if time.time() - start_time > 5.0:  # max 5 sec move
+                        break
                     with motor_pos_lock:
                         q = motor_pos.copy()
 
@@ -254,38 +281,48 @@ def autonomous_sequencer():
                     FK = num_forward_kinematics(q)
                     p_curr = FK[:3, 3]
 
+                    error = target - p_curr
+                    if np.linalg.norm(error) < 0.005:
+                        break
+
                     # Compute v_task as proportional error
-                    v_lin = Kp * (target - p_curr)
+                    v_lin = np.clip(Kp * error, -0.3, 0.3)
 
                     with task_velocity_lock:
                         task_velocity = np.array([v_lin[0], v_lin[1], v_lin[2], 0.0])
 
                     time.sleep(0.01)
-            else:
+
+            elif action == "dispense1" and autonomous_mode:
                 with task_velocity_lock:
                     task_velocity = np.zeros((4,))
-
-            if action == "dispense1":
+                time.sleep(0.1)
                 with dispense_request_lock:
                     dispense_request["d1"] = True
-                time.sleep(1.0)
+                time.sleep(control_table.DISPENSE_TIMEOUT + 0.3)
 
-            elif action == "dispense2":
+            elif action == "dispense2" and autonomous_mode:
+                with task_velocity_lock:
+                    task_velocity = np.zeros((4,))
+                time.sleep(0.1)
                 with dispense_request_lock:
                     dispense_request["d2"] = True
-                time.sleep(1.0)
+                time.sleep(control_table.DISPENSE_TIMEOUT + 0.3)
 
-            elif action == "drop":
+            elif action == "drop" and autonomous_mode:
+                with task_velocity_lock:
+                    task_velocity = np.zeros((4,))
+                time.sleep(0.1)
                 # Toggle payload to False for 0.5 sec
                 with payload_mode_lock:
                     payload_mode = False
-                time.sleep(0.5)
+                time.sleep(1.0)
                 with payload_mode_lock:
                     payload_mode = True
 
 
 def joystick_monitor():
-    global running, task_velocity, payload_mode, dispense_request
+    global running, autonomous_mode, task_velocity, payload_mode, dispense_request
 
     js = joystick_connect()
 
@@ -316,6 +353,7 @@ def joystick_monitor():
             if XB:
                 with running_lock:
                     running = False
+                    autonomous_mode = False
             elif LB and RB:
                 x_velocity = -0.2 * LY
                 y_velocity = -0.2 * LX
@@ -328,10 +366,11 @@ def joystick_monitor():
 
                 # Dispense only on button press (rising edge)
                 if YB and not prev_YB:
-                    with dispense_request_lock:
-                        dispense_request["d1"] = True
+                    with running_lock:
+                        autonomous_mode = not autonomous_mode
                 if BB and not prev_BB:
                     with dispense_request_lock:
+                        dispense_request["d1"] = True
                         dispense_request["d2"] = True
 
                 # Toggle payload_mode on AB rising edge
@@ -345,8 +384,9 @@ def joystick_monitor():
                 prev_AB = AB
 
             else:
-                with task_velocity_lock:
-                    task_velocity = np.zeros((4,))
+                if not autonomous_mode:
+                    with task_velocity_lock:
+                        task_velocity = np.zeros((4,))
 
             time.sleep(0.01)
     finally:
@@ -357,17 +397,17 @@ def main():
     dispenser_thread = threading.Thread(target=dispenser_control)
     motor_thread = threading.Thread(target=motor_control)
     joystick_thread = threading.Thread(target=joystick_monitor)
-    # autonomous_thread = threading.Thread(target=autonomous_sequencer)
+    autonomous_thread = threading.Thread(target=autonomous_sequencer)
 
     dispenser_thread.start()
     motor_thread.start()
     joystick_thread.start()
-    # autonomous_thread.start()
+    autonomous_thread.start()
 
     dispenser_thread.join()
     motor_thread.join()
     joystick_thread.join()
-    # autonomous_thread.join()
+    autonomous_thread.join()
 
 
 if __name__ == "__main__":
