@@ -6,6 +6,7 @@ from typing import NamedTuple
 
 class Suit(StrEnum):
     """Enum for all card suits."""
+
     C = auto()
     D = auto()
     H = auto()
@@ -14,6 +15,7 @@ class Suit(StrEnum):
 
 class Rank(IntEnum):
     """Enum for all card ranks."""
+
     ACE = auto()
     TWO = auto()
     THREE = auto()
@@ -31,6 +33,7 @@ class Rank(IntEnum):
 
 class Card(NamedTuple):
     """Union of rank and suit."""
+
     rank: Rank
     suit: Suit
 
@@ -52,7 +55,9 @@ def hand_value(hand: list[Card]) -> int:
                     value += 10
                 case Rank.ACE:
                     value += 1 if value + 11 > 21 else 11
-                case number_card:  # HACK: relies on the rank enum being in a specific order
+                case (
+                    number_card
+                ):  # HACK: relies on the rank enum being in a specific order
                     value += number_card.value
 
     # count aces last to avoid edge cases
