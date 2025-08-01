@@ -8,7 +8,7 @@ import pupil_apriltags as apriltag
 from ultralytics import YOLO  # type: ignore
 
 
-def detect_apriltags(frame_queue, tag_queue):
+def detect_apriltags(frame_queue: mp.Queue, tag_queue: mp.Queue) -> None:
     detector = apriltag.Detector(
         families="tag25h9",
         nthreads=4,
@@ -34,7 +34,7 @@ def detect_apriltags(frame_queue, tag_queue):
         tag_queue.put(tag_data)
 
 
-def draw_rectangle_with_label(frame, tag_data, id1, id2, card_labels):
+def draw_rectangle_with_label(frame, tag_data, id1, id2, card_labels) -> None:
     if id1 in tag_data and id2 in tag_data:
         c1 = np.mean(tag_data[id1], axis=0).astype(int)
         c2 = np.mean(tag_data[id2], axis=0).astype(int)
@@ -83,7 +83,6 @@ def main():
         if not frame_queue.full():
             frame_queue.put(frame.copy())
 
-        start = time.time()
         results = model.predict(source=frame, verbose=False)
         annotated_frame = frame.copy()
 

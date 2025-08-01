@@ -1,3 +1,4 @@
+import math
 import threading
 import time
 
@@ -99,7 +100,7 @@ def motor_control():
             controller.write(motor_id, control_table.PROFILE_VELOCITY, 30)
 
     # Home configuration
-    q = np.array([0.0, np.pi / 2, -np.pi / 2, 0])
+    q = np.array([0.0, np.pi / 2, -np.pi / 2, 0.0])
     ticks = [
         control_table.MOTOR12_HOME + radians_to_ticks(q[0]),
         control_table.MOTOR13_HOME + radians_to_ticks(q[1]),
@@ -192,7 +193,8 @@ def motor_control():
             elapsed = time.perf_counter() - start
             sleep_time = max(0.0, 0.005 - elapsed)
             time.sleep(sleep_time)
-
+    except Exception as e:
+        print(e)
     finally:
         with controller_lock:
             dynamixel_disconnect(controller)
@@ -282,7 +284,7 @@ def autonomous_sequencer():
                     p_curr = FK[:3, 3]
 
                     error = target - p_curr
-                    if np.linalg.norm(error) < 0.005:
+                    if math.isclose(error, target, abs_tol=5e-3):
                         break
 
                     # Compute v_task as proportional error
