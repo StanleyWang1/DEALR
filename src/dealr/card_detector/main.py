@@ -17,9 +17,9 @@ def main() -> None:
     # Use the model
     # results = model.train(data="coco128.yaml", epochs=3)  # train the model
     # results = model.val()  # evaluate model performance on the validation set
-    results = model("test.jpg")  # predict on an image
+    results = model.predict("test.jpg", verbose=False)  # predict on an image
     # model.export(format="onnx")  # export a model to ONNX format
-    print(results)
+    print(results[0].summary())
 
 
 if __name__ == "__main__":

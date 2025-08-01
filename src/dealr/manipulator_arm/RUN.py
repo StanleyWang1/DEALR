@@ -1,11 +1,18 @@
 import threading
 import time
 
-import control_table
 import numpy as np
-from dynamixel_driver import dynamixel_connect, dynamixel_disconnect, dynamixel_drive, radians_to_ticks, ticks_to_radians
-from joystick_driver import joystick_connect, joystick_disconnect, joystick_read
-from kinematics import num_forward_kinematics, num_jacobian
+
+from . import control_table
+from .dynamixel_driver import (
+    dynamixel_connect,
+    dynamixel_disconnect,
+    dynamixel_drive,
+    radians_to_ticks,
+    ticks_to_radians,
+)
+from .joystick_driver import joystick_connect, joystick_disconnect, joystick_read
+from .kinematics import num_forward_kinematics, num_jacobian
 
 # Global Variables
 running = True
@@ -70,6 +77,7 @@ def dispenser_control():
                 dispense_request["d2"] = False
 
         time.sleep(0.1)  # 10 Hz loop
+
 
 def motor_control():
     def joint_limit(motor_id, ticks):
@@ -144,9 +152,15 @@ def motor_control():
 
             # Compute new ticks
             new_ticks = [
-                joint_limit(JOINT1, control_table.MOTOR12_HOME + radians_to_ticks(q[0])),
-                joint_limit(JOINT2, control_table.MOTOR13_HOME + radians_to_ticks(q[1])),
-                joint_limit(JOINT3, control_table.MOTOR14_HOME - radians_to_ticks(q[2])),
+                joint_limit(
+                    JOINT1, control_table.MOTOR12_HOME + radians_to_ticks(q[0])
+                ),
+                joint_limit(
+                    JOINT2, control_table.MOTOR13_HOME + radians_to_ticks(q[1])
+                ),
+                joint_limit(
+                    JOINT3, control_table.MOTOR14_HOME - radians_to_ticks(q[2])
+                ),
                 0,  # placeholder for JOINT4
             ]
 
@@ -158,13 +172,17 @@ def motor_control():
                 else:
                     new_ticks[3] = joint_limit(
                         JOINT4,
-                        control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - control_table.PAYLOAD_STEP,
+                        control_table.MOTOR15_HOME
+                        + radians_to_ticks(q[3])
+                        - control_table.PAYLOAD_STEP,
                     )
 
             now = time.perf_counter()
 
             # Send new command if ticks changed OR every 50 ms as a refresh
-            if not np.allclose(new_ticks, ticks, atol=1) or (now - last_drive_time > 0.05):
+            if not np.allclose(new_ticks, ticks, atol=1) or (
+                now - last_drive_time > 0.05
+            ):
                 ticks = new_ticks.copy()
                 with controller_lock:
                     dynamixel_drive(controller, group_sync_write, ticks)
@@ -178,6 +196,7 @@ def motor_control():
     finally:
         with controller_lock:
             dynamixel_disconnect(controller)
+
 
 def motor_monitor():
     global running, controller
@@ -225,8 +244,15 @@ def motor_monitor():
     finally:
         pass
 
+
 def autonomous_sequencer():
-    global running, autonomous_mode, task_velocity, motor_pos, dispense_request, payload_mode
+    global \
+        running, \
+        autonomous_mode, \
+        task_velocity, \
+        motor_pos, \
+        dispense_request, \
+        payload_mode
 
     waypoints = [
         ("move", np.array([0.24, 0.0, 0.09])),  # bowl

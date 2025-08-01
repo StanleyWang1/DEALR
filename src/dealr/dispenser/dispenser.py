@@ -2,7 +2,7 @@ import threading
 
 from .dispenser_core import Dispenser
 from .dispenser_gui import start_gui
-from .dynamixel_controller import DynamixelController
+from ..motor.dynamixel_controller import DynamixelController
 
 
 def main():

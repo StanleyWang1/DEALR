@@ -3,7 +3,7 @@
 import time
 
 import numpy as np
-import sympy as sp
+import sympy as sp  # type: ignore
 
 # -------------------- CONSTANTS --------------------
 L1_CONST = 0.08545  # Link 1 length [m]
@@ -97,63 +97,68 @@ def sym_jacobian_angular(mdh: dict) -> sp.Matrix:
     return sp.Matrix.hstack(z1, z2, z3, z4)
 
 
-def num_forward_kinematics(joint_coords: list[float]) -> np.ndarray:
+def num_forward_kinematics(joint_coords: np.ndarray) -> np.ndarray:
     """Compute numerical forward kinematics for given joint coordinates."""
     return np.array(FK_num(*joint_coords))
 
 
-def num_jacobian(joint_coords: list[float]) -> np.ndarray:
+def num_jacobian(joint_coords: np.ndarray) -> np.ndarray:
     """Compute numerical Jacobian for given joint coordinates."""
     return np.array(J_num(*joint_coords))
 
 
-# -------------------- SYMBOLIC DERIVATIONS --------------------
-print("Starting symbolic kinematic derivations...")
-# T = sp.simplify(sym_forward_kinematics(MDH_sym))
-T = sym_forward_kinematics(MDH_sym)
-print("Computed forward kinematics.")
+def main() -> None:
+    # -------------------- SYMBOLIC DERIVATIONS --------------------
+    print("Starting symbolic kinematic derivations...")
+    # T = sp.simplify(sym_forward_kinematics(MDH_sym))
+    T = sym_forward_kinematics(MDH_sym)
+    print("Computed forward kinematics.")
 
-FK_num = sp.lambdify((th1, th2, th3, th4), T, modules="numpy")
+    FK_num = sp.lambdify((th1, th2, th3, th4), T, modules="numpy")
 
-Jv = sp.simplify(sym_jacobian_linear(T))
-print("Computed linear velocity Jacobian.")
+    Jv = sp.simplify(sym_jacobian_linear(T))
+    print("Computed linear velocity Jacobian.")
 
-Jw = sp.simplify(sym_jacobian_angular(MDH_sym))
-print("Computed angular velocity Jacobian.")
+    Jw = sp.simplify(sym_jacobian_angular(MDH_sym))
+    print("Computed angular velocity Jacobian.")
 
-y_e = T[:3, 1]
-z_0 = sp.Matrix([0, 0, 1])
-c = z_0.cross(y_e)
-J_orient = c.T @ Jw
-print("Computed task orientation Jacobian")
+    y_e = T[:3, 1]
+    z_0 = sp.Matrix([0, 0, 1])
+    c = z_0.cross(y_e)
+    J_orient = c.T @ Jw
+    print("Computed task orientation Jacobian")
 
-J = sp.Matrix.vstack(Jv, J_orient)
-J_num = sp.lambdify((th1, th2, th3, th4), J, modules="numpy")
+    J = sp.Matrix.vstack(Jv, J_orient)
+    J_num = sp.lambdify((th1, th2, th3, th4), J, modules="numpy")
 
-# -------------------- TEST CASE --------------------
-test_config = [0, np.pi / 2, -np.pi / 2, np.pi / 2]
-print(num_forward_kinematics(test_config))
-print(num_jacobian(test_config))
+    # -------------------- TEST CASE --------------------
+    test_config = np.array([0, np.pi / 2, -np.pi / 2, np.pi / 2])
+    print(num_forward_kinematics(test_config))
+    print(num_jacobian(test_config))
 
-# -------------------- BENCHMARKING --------------------
-# print("\nBenchmarking FK and Jacobian for 100 random configs...")
+    # -------------------- BENCHMARKING --------------------
+    # print("\nBenchmarking FK and Jacobian for 100 random configs...")
 
-# # Generate 100 random configurations: th1, th2, th3, th4
-# configs = np.random.uniform(low=-np.pi, high=np.pi, size=(100, 4))
+    # # Generate 100 random configurations: th1, th2, th3, th4
+    # configs = np.random.uniform(low=-np.pi, high=np.pi, size=(100, 4))
 
-# # Benchmark FK
-# start_fk = time.perf_counter()
-# for q in configs:
-#     _ = num_forward_kinematics(q)
-# end_fk = time.perf_counter()
-# avg_fk_ms = (end_fk - start_fk) / len(configs) * 1000
+    # # Benchmark FK
+    # start_fk = time.perf_counter()
+    # for q in configs:
+    #     _ = num_forward_kinematics(q)
+    # end_fk = time.perf_counter()
+    # avg_fk_ms = (end_fk - start_fk) / len(configs) * 1000
 
-# # Benchmark Jacobian
-# start_jac = time.perf_counter()
-# for q in configs:
-#     _ = num_jacobian(q)
-# end_jac = time.perf_counter()
-# avg_jac_ms = (end_jac - start_jac) / len(configs) * 1000
+    # # Benchmark Jacobian
+    # start_jac = time.perf_counter()
+    # for q in configs:
+    #     _ = num_jacobian(q)
+    # end_jac = time.perf_counter()
+    # avg_jac_ms = (end_jac - start_jac) / len(configs) * 1000
 
-# print(f"Average FK runtime: {avg_fk_ms:.4f} ms per call")
-# print(f"Average Jacobian runtime: {avg_jac_ms:.4f} ms per call")
+    # print(f"Average FK runtime: {avg_fk_ms:.4f} ms per call")
+    # print(f"Average Jacobian runtime: {avg_jac_ms:.4f} ms per call")
+
+
+if __name__ == "__main__":
+    main()

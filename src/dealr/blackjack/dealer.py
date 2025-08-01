@@ -88,7 +88,7 @@ class Dealer(StateMachine):
         for _ in range(2):
             for player in self.players:
                 card = self.deck.pop()
-                player.hand.append(card)
+                player.hand.append(card)  # TODO: deal card
             dealer_card = self.deck.pop()
             self.hand.append(dealer_card)
 
@@ -100,7 +100,7 @@ class Dealer(StateMachine):
         player.last_action = PlayerAction.HIT
         if cards.hand_value(player.hand) > BLACKJACK:
             player.status = PlayerStatus.BUSTED
-            player.bet = 0
+            player.bet = 0  # TODO: collect chips
         self.player_index = (self.player_index + 1) % len(self.players)
 
     def on_player_stands(self) -> None:
@@ -121,7 +121,7 @@ class Dealer(StateMachine):
         if cards.hand_value(self.hand) != BLACKJACK:
             for p in active_players:
                 if cards.hand_value(p.hand) == BLACKJACK:
-                    p.bet = p.bet + p.bet // 2
+                    p.bet = p.bet + p.bet // 2  # TODO: deal out chips
 
     def on_settling_bets(self) -> None:
         """Settles bets after game conclusion."""
@@ -129,11 +129,11 @@ class Dealer(StateMachine):
         active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]
         if dealer_value > BLACKJACK:
             for p in active_players:
-                p.bet *= 2
+                p.bet *= 2  # TODO: deal out chips
         else:
             for p in active_players:
                 player_value = cards.hand_value(p.hand)
                 if player_value > dealer_value:
-                    p.bet *= 2
+                    p.bet *= 2  # TODO: deal out chips
                 elif player_value < dealer_value:
-                    p.bet = 0
+                    p.bet = 0  # TODO: collect chips
