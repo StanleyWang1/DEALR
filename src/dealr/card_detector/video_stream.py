@@ -1,10 +1,11 @@
-import cv2
-from pathlib import Path
-from ultralytics import YOLO
 import multiprocessing as mp
-import pupil_apriltags as apriltag
-import numpy as np
 import time
+from pathlib import Path
+
+import cv2
+import numpy as np
+import pupil_apriltags as apriltag
+from ultralytics import YOLO  # type: ignore
 
 
 def detect_apriltags(frame_queue, tag_queue):
@@ -119,29 +120,55 @@ def main():
         cards_rect1, cards_rect2 = [], []
         if current_tags:
             if 21 in current_tags and 22 in current_tags:
-                rect1_xmin = min(current_tags[21][:, 0].min(), current_tags[22][:, 0].min())
-                rect1_xmax = max(current_tags[21][:, 0].max(), current_tags[22][:, 0].max())
-                rect1_ymin = min(current_tags[21][:, 1].min(), current_tags[22][:, 1].min())
-                rect1_ymax = max(current_tags[21][:, 1].max(), current_tags[22][:, 1].max())
+                rect1_xmin = min(
+                    current_tags[21][:, 0].min(), current_tags[22][:, 0].min()
+                )
+                rect1_xmax = max(
+                    current_tags[21][:, 0].max(), current_tags[22][:, 0].max()
+                )
+                rect1_ymin = min(
+                    current_tags[21][:, 1].min(), current_tags[22][:, 1].min()
+                )
+                rect1_ymax = max(
+                    current_tags[21][:, 1].max(), current_tags[22][:, 1].max()
+                )
 
                 for label, xyxy in detected_cards:
                     cx, cy = (xyxy[0] + xyxy[2]) // 2, (xyxy[1] + xyxy[3]) // 2
-                    if rect1_xmin <= cx <= rect1_xmax and rect1_ymin <= cy <= rect1_ymax:
+                    if (
+                        rect1_xmin <= cx <= rect1_xmax
+                        and rect1_ymin <= cy <= rect1_ymax
+                    ):
                         cards_rect1.append(label)
 
             if 23 in current_tags and 24 in current_tags:
-                rect2_xmin = min(current_tags[23][:, 0].min(), current_tags[24][:, 0].min())
-                rect2_xmax = max(current_tags[23][:, 0].max(), current_tags[24][:, 0].max())
-                rect2_ymin = min(current_tags[23][:, 1].min(), current_tags[24][:, 1].min())
-                rect2_ymax = max(current_tags[23][:, 1].max(), current_tags[24][:, 1].max())
+                rect2_xmin = min(
+                    current_tags[23][:, 0].min(), current_tags[24][:, 0].min()
+                )
+                rect2_xmax = max(
+                    current_tags[23][:, 0].max(), current_tags[24][:, 0].max()
+                )
+                rect2_ymin = min(
+                    current_tags[23][:, 1].min(), current_tags[24][:, 1].min()
+                )
+                rect2_ymax = max(
+                    current_tags[23][:, 1].max(), current_tags[24][:, 1].max()
+                )
 
                 for label, xyxy in detected_cards:
                     cx, cy = (xyxy[0] + xyxy[2]) // 2, (xyxy[1] + xyxy[3]) // 2
-                    if rect2_xmin <= cx <= rect2_xmax and rect2_ymin <= cy <= rect2_ymax:
+                    if (
+                        rect2_xmin <= cx <= rect2_xmax
+                        and rect2_ymin <= cy <= rect2_ymax
+                    ):
                         cards_rect2.append(label)
 
-            draw_rectangle_with_label(annotated_frame, current_tags, 21, 22, cards_rect1)
-            draw_rectangle_with_label(annotated_frame, current_tags, 23, 24, cards_rect2)
+            draw_rectangle_with_label(
+                annotated_frame, current_tags, 21, 22, cards_rect1
+            )
+            draw_rectangle_with_label(
+                annotated_frame, current_tags, 23, 24, cards_rect2
+            )
 
         # Show FPS at top-right
         h, w = annotated_frame.shape[:2]
