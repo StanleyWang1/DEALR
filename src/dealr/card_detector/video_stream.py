@@ -1,25 +1,3 @@
-<<<<<<< Updated upstream:src/dealr/card_detector/video_stream.py
-"""Live Card Detection Driver"""
-
-from pathlib import Path
-
-import cv2
-from ultralytics import YOLO  # type: ignore
-import zmq
-
-
-def main() -> None:
-    context = zmq.Context()
-    socket = context.socket(zmq.PUB)
-    socket.bind("tcp://*:5555")
-
-    # Load a pretrained model
-    model_path = Path("models") / "best.pt"
-    model = YOLO(model_path)
-
-    # Initialize camera (0 = default webcam)
-    cap = cv2.VideoCapture(0)
-=======
 import cv2
 from pathlib import Path
 from ultralytics import YOLO
@@ -82,7 +60,6 @@ def main():
     model = YOLO(model_path)
 
     cap = cv2.VideoCapture(1)
->>>>>>> Stashed changes:src/card_detector/video_stream.py
     if not cap.isOpened():
         print("Error: Could not open camera.")
         return
@@ -109,15 +86,6 @@ def main():
         results = model.predict(source=frame, verbose=False)
         annotated_frame = frame.copy()
 
-<<<<<<< Updated upstream:src/dealr/card_detector/video_stream.py
-        # Draw detections on frame
-        # annotated_frame = results[0].plot()
-
-        socket.send_json(results)
-
-        # Display result
-        # cv2.imshow("Live Card Detection", annotated_frame)
-=======
         detected_cards = []
         for r in results[0].boxes:
             conf = float(r.conf[0])
@@ -189,7 +157,6 @@ def main():
         )
 
         cv2.imshow("Live Card Detection", annotated_frame)
->>>>>>> Stashed changes:src/card_detector/video_stream.py
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
