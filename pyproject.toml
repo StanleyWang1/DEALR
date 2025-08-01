@@ -11,6 +11,7 @@ dependencies = [
     "onnx>=1.18.0",
     "onnxslim>=0.1.61",
     "opencv-python>=4.11.0.86",
+    "pupil-apriltags>=1.0.4.post11",
     "pygame>=2.6.1",
     "python-statemachine[diagrams]>=2.5.0",
     "pyzmq>=27.0.0",

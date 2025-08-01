@@ -145,6 +145,7 @@ dependencies = [
     { name = "onnx" },
     { name = "onnxslim" },
     { name = "opencv-python" },
+    { name = "pupil-apriltags" },
     { name = "pygame" },
     { name = "python-statemachine", extra = ["diagrams"] },
     { name = "pyzmq" },
@@ -168,6 +169,7 @@ requires-dist = [
     { name = "onnx", specifier = ">=1.18.0" },
     { name = "onnxslim", specifier = ">=0.1.61" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
+    { name = "pupil-apriltags", specifier = ">=1.0.4.post11" },
     { name = "pygame", specifier = ">=2.6.1" },
     { name = "python-statemachine", extras = ["diagrams"], specifier = ">=2.5.0" },
     { name = "pyzmq", specifier = ">=27.0.0" },
@@ -797,6 +799,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/a2/709e0fe2f093556c17fbafda93ac032257242cabcc7ff3369e2cb76a97aa/psutil-7.0.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a5f098451abc2828f7dc6b58d44b532b22f2088f4999a937557b603ce72b1993", size = 279544, upload-time = "2025-02-13T21:54:24.68Z" },
     { url = "https://files.pythonhosted.org/packages/50/e6/eecf58810b9d12e6427369784efe814a1eec0f492084ce8eb8f4d89d6d61/psutil-7.0.0-cp37-abi3-win32.whl", hash = "sha256:ba3fcef7523064a6c9da440fc4d6bd07da93ac726b5733c29027d7dc95b39d99", size = 241053, upload-time = "2025-02-13T21:54:34.31Z" },
     { url = "https://files.pythonhosted.org/packages/50/1b/6921afe68c74868b4c9fa424dad3be35b095e16687989ebbb50ce4fceb7c/psutil-7.0.0-cp37-abi3-win_amd64.whl", hash = "sha256:4cf3d4eb1aa9b348dec30105c55cd9b7d4629285735a102beb4441e38db90553", size = 244885, upload-time = "2025-02-13T21:54:37.486Z" },
+]
+
+[[package]]
+name = "pupil-apriltags"
+version = "1.0.4.post11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b9/d2/06ec5cd9ad9835ebd7e8f28b2a4c808215fca39e180dc4f95f26b98a45e7/pupil_apriltags-1.0.4.post11.tar.gz", hash = "sha256:18980da3d3a341e94401cac341768dd453c992d9f0e19a9e6dfdd5c326ff46c4", size = 1914282, upload-time = "2025-04-22T15:21:10.88Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/46/fab76c4dc791ed9c42aff2938c6f5059959034207aa9cbbb584a2d89a0b6/pupil_apriltags-1.0.4.post11-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:77d80f00a1c3972af90b2ac68e45dd001e816101ddedd9ce1af764125566c770", size = 7774435, upload-time = "2025-04-22T15:20:40.497Z" },
+    { url = "https://files.pythonhosted.org/packages/36/bf/88aa37ba004d782a3c0537f975a36d05a3c7814465a55211d86c22594dc7/pupil_apriltags-1.0.4.post11-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e5c46005e61233a44e912921aeddbe8ebf05ffcddadccd798a2f0b02a9524d7c", size = 4931853, upload-time = "2025-04-22T15:20:57.686Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/e8/f2d47f7257469570994857d2dc34ba5f8dd14fa2741215c2115333d8b5f9/pupil_apriltags-1.0.4.post11-cp313-cp313-win_amd64.whl", hash = "sha256:ada1154cd64bd86f39edd6bdd72d7371ded80ce2cde4a344d4fda2aab923db28", size = 2051847, upload-time = "2025-04-22T15:20:35.744Z" },
 ]
 
 [[package]]
