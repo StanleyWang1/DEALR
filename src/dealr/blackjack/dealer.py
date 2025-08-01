@@ -41,14 +41,13 @@ class Dealer(StateMachine):
     resolving_dealer = State()
     done = State(final=True)
 
-    initial_deal = idle.to(waiting_for_player)
+    start_game = idle.to(waiting_for_player)
     player_hits = waiting_for_player.to.itself()
     player_stands = waiting_for_player.to.itself()
-    player_blackjack = waiting_for_player.to(done, cond="player_has_blackjack")
-    resolve_dealer_hand = waiting_for_player.to(
-        resolving_dealer, cond="all_players_done"
-    )
-    settling_bets = resolving_dealer.to(done)
+    dealer_blackjack = waiting_for_player.to(done)
+    player_blackjack = waiting_for_player.to(done)
+    resolve_dealer_hand = waiting_for_player.to(resolving_dealer)
+    settle_bets = resolving_dealer.to(done)
 
     def __init__(self, players: list[Player]) -> None:
         self.players = players
@@ -81,7 +80,7 @@ class Dealer(StateMachine):
         """
         return any(cards.hand_value(p.hand) == BLACKJACK for p in self.players)
 
-    def on_initial_deal(self) -> None:
+    def on_start_game(self) -> None:
         """Deal the initial cards from the deck, dealers included."""
         random.shuffle(self.deck)
         # TODO: add hardware shuffling
@@ -91,6 +90,15 @@ class Dealer(StateMachine):
                 player.hand.append(card)  # TODO: deal card
             dealer_card = self.deck.pop()
             self.hand.append(dealer_card)
+
+    def on_enter_waiting_for_player(self) -> None:
+        """Automatically check and transition to done state."""
+        if self.all_players_done():
+            self.resolve_dealer_hand()
+        if self.player_has_blackjack():
+            self.player_blackjack()
+        if cards.hand_value(self.hand) == BLACKJACK:
+            self.dealer_blackjack()
 
     def on_player_hits(self) -> None:
         """Give players a card."""
@@ -114,6 +122,7 @@ class Dealer(StateMachine):
         while dealer_hand_value(self.hand) < DEALER_LIMIT:
             card = self.deck.pop()
             self.hand.append(card)
+        self.settle_bets()
 
     def on_player_blackjack(self) -> None:
         """Automatically finishes the game and pays out to all blackjacked players."""
@@ -122,8 +131,8 @@ class Dealer(StateMachine):
             for p in active_players:
                 if cards.hand_value(p.hand) == BLACKJACK:
                     p.bet = p.bet + p.bet // 2  # TODO: deal out chips
-
-    def on_settling_bets(self) -> None:
+    
+    def on_settle_bets(self) -> None:
         """Settles bets after game conclusion."""
         dealer_value = dealer_hand_value(self.hand)
         active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]

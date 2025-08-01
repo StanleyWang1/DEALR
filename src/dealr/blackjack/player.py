@@ -1,6 +1,6 @@
 """Player class."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum, auto
 
 from dealr.blackjack.cards import Card
@@ -21,7 +21,7 @@ class PlayerStatus(StrEnum):
 @dataclass
 class Player:
     """Player record class."""
-    hand: list[Card]
     bet: int
-    last_action: PlayerAction
+    last_action: PlayerAction | None = None
+    hand: list[Card] = field(default_factory=list)
     status: PlayerStatus = PlayerStatus.ACTIVE
