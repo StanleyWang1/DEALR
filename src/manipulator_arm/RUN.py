@@ -158,7 +158,7 @@ def motor_control():
                 else:
                     new_ticks[3] = joint_limit(
                         JOINT4,
-                        control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - 500,
+                        control_table.MOTOR15_HOME + radians_to_ticks(q[3]) - control_table.PAYLOAD_STEP,
                     )
 
             now = time.perf_counter()
@@ -229,24 +229,25 @@ def autonomous_sequencer():
     global running, autonomous_mode, task_velocity, motor_pos, dispense_request, payload_mode
 
     waypoints = [
-        ("move", np.array([0.25, 0.0, 0.12])),  # bowl
-        ("move", np.array([0.06, 0.275, 0.12])),  # dispenser 1
+        ("move", np.array([0.24, 0.0, 0.09])),  # bowl
+        ("move", np.array([0.022, 0.285, 0.13])),  # dispenser 1
         ("dispense1", None),
-        ("move", np.array([0.21, 0.27, 0.12])),  # dispenser 2
+        ("move", np.array([0.17, 0.285, 0.13])),  # dispenser 2
         ("dispense2", None),
         ("move", np.array([0.25, 0.0, 0.12])),  # bowl
         ("drop", None),
     ]
 
-    Kp = 2.0  # proportional gain for Cartesian velocity
+    Kp = 3.0  # proportional gain for Cartesian velocity
 
     while running:
         for action, target in waypoints:
             start_time = time.time()
-
             if action == "move":
                 # move for 2 sec toward target
-                while time.time() - start_time < 5.0 and autonomous_mode:
+                while autonomous_mode:
+                    if time.time() - start_time > 5.0:  # max 5 sec move
+                        break
                     with motor_pos_lock:
                         q = motor_pos.copy()
 
@@ -254,8 +255,12 @@ def autonomous_sequencer():
                     FK = num_forward_kinematics(q)
                     p_curr = FK[:3, 3]
 
+                    error = target - p_curr
+                    if np.linalg.norm(error) < 0.005:
+                        break
+
                     # Compute v_task as proportional error
-                    v_lin = Kp * (target - p_curr)
+                    v_lin = np.clip(Kp * error, -0.3, 0.3)
 
                     with task_velocity_lock:
                         task_velocity = np.array([v_lin[0], v_lin[1], v_lin[2], 0.0])
@@ -268,7 +273,7 @@ def autonomous_sequencer():
                 time.sleep(0.1)
                 with dispense_request_lock:
                     dispense_request["d1"] = True
-                time.sleep(1.0)
+                time.sleep(control_table.DISPENSE_TIMEOUT + 0.3)
 
             elif action == "dispense2" and autonomous_mode:
                 with task_velocity_lock:
@@ -276,7 +281,7 @@ def autonomous_sequencer():
                 time.sleep(0.1)
                 with dispense_request_lock:
                     dispense_request["d2"] = True
-                time.sleep(1.0)
+                time.sleep(control_table.DISPENSE_TIMEOUT + 0.3)
 
             elif action == "drop" and autonomous_mode:
                 with task_velocity_lock:
@@ -339,6 +344,7 @@ def joystick_monitor():
                         autonomous_mode = not autonomous_mode
                 if BB and not prev_BB:
                     with dispense_request_lock:
+                        dispense_request["d1"] = True
                         dispense_request["d2"] = True
 
                 # Toggle payload_mode on AB rising edge
