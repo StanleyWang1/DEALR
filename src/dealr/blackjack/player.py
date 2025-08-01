@@ -8,12 +8,14 @@ from dealr.blackjack.cards import Card
 
 class PlayerAction(StrEnum):
     """Enum of possible player actions."""
+
     HIT = auto()
     STAND = auto()
 
 
 class PlayerStatus(StrEnum):
     """Enum of possible player statuses."""
+
     ACTIVE = auto()
     BUSTED = auto()
 
@@ -21,6 +23,7 @@ class PlayerStatus(StrEnum):
 @dataclass
 class Player:
     """Player record class."""
+
     bet: int
     last_action: PlayerAction | None = None
     hand: list[Card] = field(default_factory=list)

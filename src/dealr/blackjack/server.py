@@ -1,4 +1,4 @@
-"""Game logic loop for blackjack."""
+"""Game logic server for blackjack."""
 
 import zmq
 
@@ -8,6 +8,12 @@ from dealr.blackjack.player import Player
 
 
 def serve(num_players: int, port: int) -> None:
+    """Spawns a blackjack 0MQ server/client.
+
+    Args:
+        num_players: Number of players to listen for.
+        port: TCP port to listen on.
+    """
     players = [Player(bet=100) for _ in range(num_players)]
     game = Dealer(players)
     context = zmq.Context()

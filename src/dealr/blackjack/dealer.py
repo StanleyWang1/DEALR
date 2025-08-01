@@ -131,7 +131,7 @@ class Dealer(StateMachine):
             for p in active_players:
                 if cards.hand_value(p.hand) == BLACKJACK:
                     p.bet = p.bet + p.bet // 2  # TODO: deal out chips
-    
+
     def on_settle_bets(self) -> None:
         """Settles bets after game conclusion."""
         dealer_value = dealer_hand_value(self.hand)
