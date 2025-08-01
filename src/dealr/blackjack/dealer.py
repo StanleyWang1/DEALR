@@ -5,8 +5,8 @@ import random
 
 from statemachine import State, StateMachine
 
-from . import cards
-from .player import Player, PlayerAction, PlayerStatus
+from dealr.blackjack import cards
+from dealr.blackjack.player import Player, PlayerAction, PlayerStatus
 
 DEALER_LIMIT = 17
 BLACKJACK = 21

@@ -3,8 +3,8 @@ import time
 import numpy as np
 from dynamixel_sdk import COMM_SUCCESS, GroupSyncWrite  # type: ignore
 
-from ..motor.dynamixel_controller import DynamixelController
-from .control_table import (
+from dealr.motor.dynamixel_controller import DynamixelController
+from dealr.manipulator_arm.control_table import (
     GOAL_POSITION,
     MOTOR12_HOME,
     MOTOR13_HOME,
@@ -15,7 +15,7 @@ from .control_table import (
     PROFILE_VELOCITY,
     TORQUE_ENABLE,
 )
-from .kinematics import num_forward_kinematics, num_jacobian
+from dealr.manipulator_arm.kinematics import num_forward_kinematics, num_jacobian
 
 # Motor IDs
 JOINT1 = 12

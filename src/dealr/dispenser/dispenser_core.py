@@ -5,8 +5,8 @@ import threading
 import time
 from enum import Enum, auto
 
-from ..motor.dynamixel_controller import DynamixelController
-from . import control_table
+from dealr.motor.dynamixel_controller import DynamixelController
+from dealr.dispenser import control_table
 
 
 class DispenserState(Enum):

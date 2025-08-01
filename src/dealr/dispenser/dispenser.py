@@ -1,8 +1,8 @@
 import threading
 
-from .dispenser_core import Dispenser
-from .dispenser_gui import start_gui
-from ..motor.dynamixel_controller import DynamixelController
+from dealr.dispenser.dispenser_core import Dispenser
+from dealr.dispenser.dispenser_gui import start_gui
+from dealr.motor.dynamixel_controller import DynamixelController
 
 
 def main():

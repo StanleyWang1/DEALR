@@ -3,16 +3,16 @@ import time
 
 import numpy as np
 
-from . import control_table
-from .dynamixel_driver import (
+from dealr.manipulator_arm  import control_table
+from dealr.manipulator_arm.dynamixel_driver import (
     dynamixel_connect,
     dynamixel_disconnect,
     dynamixel_drive,
     radians_to_ticks,
     ticks_to_radians,
 )
-from .joystick_driver import joystick_connect, joystick_disconnect, joystick_read
-from .kinematics import num_forward_kinematics, num_jacobian
+from dealr.manipulator_arm.joystick_driver import joystick_connect, joystick_disconnect, joystick_read
+from dealr.manipulator_arm.kinematics import num_forward_kinematics, num_jacobian
 
 # Global Variables
 running = True

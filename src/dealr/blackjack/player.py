@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
 
-from .cards import Card
+from dealr.blackjack.cards import Card
 
 
 class PlayerAction(StrEnum):
