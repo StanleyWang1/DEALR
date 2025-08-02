@@ -37,6 +37,9 @@ class Card(NamedTuple):
     rank: Rank
     suit: Suit
 
+    def __str__(self) -> str:
+        return f"{self.rank.name} {self.suit.name}"
+
 
 def hand_value(hand: list[Card]) -> int:
     """Calculates the blackjack value of a list of cards.
