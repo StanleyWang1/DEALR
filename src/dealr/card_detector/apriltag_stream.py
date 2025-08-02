@@ -1,31 +1,21 @@
+import itertools
+
 import cv2
 import pupil_apriltags as apriltag
 import numpy as np
 
+from dealr.blackjack import cards
+
 # Map AprilTag IDs to card names and values
-CARD_MAP = {
-    1: ("AH", 1),
-    2: ("2H", 2),
-    3: ("3H", 3),
-    4: ("4H", 4),
-    5: ("5H", 5),
-    6: ("6H", 6),
-    7: ("7H", 7),
-    8: ("8H", 8),
-    9: ("9H", 9),
-    10: ("10H", 10),
-    11: ("JH", 10),
-    12: ("QH", 10),
-    13: ("KH", 10),
-}
+CARD_MAP = dict(enumerate(cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit)))
 
 
-def get_color_and_label(cards):
-    if not cards:
+def get_color_and_label(cards_detected: list[cards.Card]):
+    if not cards_detected:
         return (0, 255, 255), "None"  # Yellow when no cards
-    total = sum(value for _, value in cards)
+    total = cards.hand_value(cards_detected)
     color = (0, 255, 0) if total <= 21 else (0, 0, 255)  # Green or Red
-    label = ", ".join(label for label, _ in cards)
+    label = ", ".join(map(str, cards_detected))
     return color, label
 
 
@@ -95,7 +85,7 @@ def main():
         # Annotate each card individually
         for det in detections:
             if det.tag_id in CARD_MAP:
-                label, _ = CARD_MAP[det.tag_id]
+                label = str(CARD_MAP[det.tag_id])
                 center = det.center.astype(int)
                 cv2.putText(
                     frame,
@@ -112,7 +102,7 @@ def main():
         for id1, id2, role_text in [(21, 22, "PLAYER"), (23, 24, "DEALER")]:
             if id1 in tag_corners and id2 in tag_corners:
                 # Get cards inside
-                cards_inside = []
+                cards_inside: list[cards.Card] = []
                 x_min = min(tag_corners[id1][:, 0].min(), tag_corners[id2][:, 0].min())
                 x_max = max(tag_corners[id1][:, 0].max(), tag_corners[id2][:, 0].max())
                 y_min = min(tag_corners[id1][:, 1].min(), tag_corners[id2][:, 1].min())
