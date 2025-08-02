@@ -13,13 +13,6 @@ class PlayerAction(StrEnum):
     STAND = auto()
 
 
-class PlayerStatus(StrEnum):
-    """Enum of possible player statuses."""
-
-    ACTIVE = auto()
-    BUSTED = auto()
-
-
 @dataclass
 class Player:
     """Player record class."""
@@ -27,4 +20,4 @@ class Player:
     bet: int
     last_action: PlayerAction | None = None
     hand: list[Card] = field(default_factory=list)
-    status: PlayerStatus = PlayerStatus.ACTIVE
+    active: bool = True

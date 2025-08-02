@@ -7,7 +7,7 @@ import random
 from statemachine import State, StateMachine
 
 from dealr.blackjack import cards
-from dealr.blackjack.player import Player, PlayerAction, PlayerStatus
+from dealr.blackjack.player import Player, PlayerAction
 
 DEALER_LIMIT = 17
 BLACKJACK = 21
@@ -45,8 +45,7 @@ class Dealer(StateMachine):
     start_game = idle.to(waiting_for_player)
     player_hits = waiting_for_player.to.itself()
     player_stands = waiting_for_player.to.itself()
-    dealer_blackjack = waiting_for_player.to(done)
-    player_blackjack = waiting_for_player.to(done)
+    dealer_natural = waiting_for_player.to(done)
     resolve_dealer_hand = waiting_for_player.to(resolving_dealer)
     settle_bets = resolving_dealer.to(done)
 
@@ -58,17 +57,7 @@ class Dealer(StateMachine):
         self.hand: list[cards.Card] = []
         self.player_queue: queue.SimpleQueue[Player] = queue.SimpleQueue()
         self.current_player: Player | None = None
-        for p in self.players:
-            self.player_queue.put(p)
         super().__init__()
-
-    def player_has_blackjack(self) -> bool:
-        """Check for any blackjacks.
-
-        Returns:
-            bool: If any players have a blackjack.
-        """
-        return any(cards.hand_value(p.hand) == BLACKJACK for p in self.players)
 
     def on_start_game(self) -> None:
         """Deal the initial cards from the deck, dealers included."""
@@ -81,15 +70,26 @@ class Dealer(StateMachine):
             dealer_card = self.deck.pop()
             self.hand.append(dealer_card)
 
+        # check for dealer/player naturals
+        if cards.hand_value(self.hand) == BLACKJACK:
+            for p in self.players:
+                if cards.hand_value(p.hand) != BLACKJACK:
+                    p.bet = 0
+            self.send("dealer_natural")
+        else:
+            for p in self.players:
+                if cards.hand_value(p.hand) == BLACKJACK:
+                    p.bet = p.bet + p.bet // 2  # TODO: deal out chips
+                    p.active = False
+        for p in self.players:
+            if p.active:
+                self.player_queue.put(p)
+
     def on_enter_waiting_for_player(self) -> None:
         """Automatically check and transition to done state."""
 
-        if cards.hand_value(self.hand) == BLACKJACK:
-            self.dealer_blackjack()
-        elif self.player_has_blackjack():
-            self.player_blackjack()
-        elif self.player_queue.empty():
-            self.resolve_dealer_hand()
+        if self.player_queue.empty():
+            self.send("resolve_dealer_hand")
         else:
             self.current_player = self.player_queue.get()
 
@@ -100,7 +100,7 @@ class Dealer(StateMachine):
             self.current_player.hand.append(card)
             self.current_player.last_action = PlayerAction.HIT
             if cards.hand_value(self.current_player.hand) > BLACKJACK:
-                self.current_player.status = PlayerStatus.BUSTED
+                self.current_player.active = False
                 self.current_player.bet = 0  # TODO: collect chips
             else:
                 self.player_queue.put(self.current_player)
@@ -115,20 +115,12 @@ class Dealer(StateMachine):
         while dealer_hand_value(self.hand) < DEALER_LIMIT:
             card = self.deck.pop()
             self.hand.append(card)
-        self.settle_bets()
-
-    def on_player_blackjack(self) -> None:
-        """Automatically finishes the game and pays out to all blackjacked players."""
-        active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]
-        if cards.hand_value(self.hand) != BLACKJACK:
-            for p in active_players:
-                if cards.hand_value(p.hand) == BLACKJACK:
-                    p.bet = p.bet + p.bet // 2  # TODO: deal out chips
+        self.send("settle_bets")
 
     def on_settle_bets(self) -> None:
         """Settles bets after game conclusion."""
         dealer_value = dealer_hand_value(self.hand)
-        active_players = [p for p in self.players if p.status == PlayerStatus.ACTIVE]
+        active_players = [p for p in self.players if p.active]
         if dealer_value > BLACKJACK:
             for p in active_players:
                 p.bet *= 2  # TODO: deal out chips
