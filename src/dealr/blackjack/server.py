@@ -3,7 +3,7 @@
 import zmq
 
 from dealr.blackjack import cards
-from dealr.blackjack.dealer import Dealer
+from dealr.blackjack.game import Dealer
 from dealr.blackjack.player import Player
 
 
