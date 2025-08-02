@@ -46,6 +46,7 @@ class Dealer(StateMachine):
     player_hits = waiting_for_player.to.itself()
     player_stands = waiting_for_player.to.itself()
     dealer_natural = waiting_for_player.to(done)
+    all_players_natural = waiting_for_player.to(done)
     resolve_dealer_hand = waiting_for_player.to(resolving_dealer)
     settle_bets = resolving_dealer.to(done)
 
@@ -81,6 +82,9 @@ class Dealer(StateMachine):
                 if cards.hand_value(p.hand) == BLACKJACK:
                     p.bet = p.bet + p.bet // 2  # TODO: deal out chips
                     p.active = False
+            if all(not p.active for p in self.players):
+                self.send("all_players_natural")
+
         for p in self.players:
             if p.active:
                 self.player_queue.put(p)
