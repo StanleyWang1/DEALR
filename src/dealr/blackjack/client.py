@@ -31,11 +31,12 @@ def serve(num_players: int, **ports: dict[str, int]) -> None:
 
     while True:
         player_hands: list[list[cards.Card]] = card_detector_socket.recv_pyobj()
-        print(player_hands)
         for player_id, hand in enumerate(player_hands):
             players[player_id].hand = hand
 
             amount = random.randint(-5, 5) * 100
             dispenser_socket.send_string(f"{player_id} {amount}")
             reply = dispenser_socket.recv_string()
+
+            print(players[player_id].hand)
             print(reply)

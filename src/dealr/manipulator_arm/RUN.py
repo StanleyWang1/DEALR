@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 
-from dealr.manipulator_arm  import control_table
+from dealr.manipulator_arm import control_table
 from dealr.manipulator_arm.dynamixel_driver import (
     dynamixel_connect,
     dynamixel_disconnect,
@@ -12,7 +12,11 @@ from dealr.manipulator_arm.dynamixel_driver import (
     radians_to_ticks,
     ticks_to_radians,
 )
-from dealr.manipulator_arm.joystick_driver import joystick_connect, joystick_disconnect, joystick_read
+from dealr.manipulator_arm.joystick_driver import (
+    joystick_connect,
+    joystick_disconnect,
+    joystick_read,
+)
 from dealr.manipulator_arm.kinematics import num_forward_kinematics, num_jacobian
 
 # Global Variables

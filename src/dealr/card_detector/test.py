@@ -1,6 +1,7 @@
 import cv2
 import pupil_apriltags as apriltag
 
+
 def main():
     cap = cv2.VideoCapture(1)
     if not cap.isOpened():
@@ -13,7 +14,7 @@ def main():
         quad_decimate=1.0,
         quad_sigma=0.0,
         refine_edges=True,
-        decode_sharpening=0.25
+        decode_sharpening=0.25,
     )
 
     print("Press 'q' to quit.")
@@ -31,12 +32,25 @@ def main():
 
             # Draw detection outline
             for i in range(4):
-                cv2.line(frame, tuple(corners[i]), tuple(corners[(i + 1) % 4]), (0, 255, 0), 2)
+                cv2.line(
+                    frame,
+                    tuple(corners[i]),
+                    tuple(corners[(i + 1) % 4]),
+                    (0, 255, 0),
+                    2,
+                )
 
             center = tuple(det.center.astype(int))
             cv2.circle(frame, center, 5, (0, 0, 255), -1)
-            cv2.putText(frame, f"ID:{tag_id}", (center[0] + 10, center[1]),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            cv2.putText(
+                frame,
+                f"ID:{tag_id}",
+                (center[0] + 10, center[1]),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 0, 255),
+                2,
+            )
 
         cv2.imshow("AprilTag Detection (25h9)", frame)
 
@@ -45,6 +59,7 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()

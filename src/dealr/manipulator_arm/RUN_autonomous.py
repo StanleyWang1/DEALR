@@ -11,7 +11,11 @@ from dealr.manipulator_arm.dynamixel_driver import (
     radians_to_ticks,
     ticks_to_radians,
 )
-from dealr.manipulator_arm.joystick_driver import joystick_connect, joystick_disconnect, joystick_read
+from dealr.manipulator_arm.joystick_driver import (
+    joystick_connect,
+    joystick_disconnect,
+    joystick_read,
+)
 from dealr.manipulator_arm.kinematics import num_forward_kinematics, num_jacobian
 
 

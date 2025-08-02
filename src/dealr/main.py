@@ -22,7 +22,9 @@ def main() -> None:
     ports_file = Path.cwd() / "src" / "dealr" / "ports.toml"
     ports = tomli.loads(ports_file.read_text(encoding="utf-8"))
     card_detector_pub = threading.Thread(
-        target=cd_server.serve, args=(args.num_players, ports["card-detector"]), daemon=True
+        target=cd_server.serve,
+        args=(args.num_players, ports["card-detector"]),
+        daemon=True,
     )
     dispenser_server = threading.Thread(
         target=ds_server.serve, args=(ports["dispenser"],), daemon=True

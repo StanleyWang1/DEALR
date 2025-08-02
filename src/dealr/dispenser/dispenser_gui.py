@@ -5,7 +5,11 @@ import threading
 import tkinter as tk
 from tkinter import ttk
 
-from dealr.dispenser.dispenser_core import ALLOWED_TRANSITIONS, Dispenser, DispenserState
+from dealr.dispenser.dispenser_core import (
+    ALLOWED_TRANSITIONS,
+    Dispenser,
+    DispenserState,
+)
 
 
 class DispenserFrame(ttk.Frame):

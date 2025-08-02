@@ -25,5 +25,7 @@ def serve(num_players: int, port: int):
     deck = [cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit)]
 
     while True:
-        hands = [random.choices(deck, k=2) for _ in range(num_players)]  # TODO: get list of hands from CV predictor
+        hands = [
+            random.choices(deck, k=2) for _ in range(num_players)
+        ]  # TODO: get list of hands from CV predictor
         socket.send_pyobj(hands)

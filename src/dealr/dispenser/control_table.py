@@ -1,5 +1,5 @@
 # HOME POSITIONS (in reference kinematic configuration)
-MOTOR_HOMES = {20 :1035, 21 : 1030, 22 : 1020}
+MOTOR_HOMES = {20: 1035, 21: 1030, 22: 1020}
 
 # DISPENSER PARAMS
 DISPENSE_STEP = 1024

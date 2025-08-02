@@ -4,10 +4,19 @@ import numpy as np
 
 # Map AprilTag IDs to card names and values
 CARD_MAP = {
-    1: ("AH", 1),   2: ("2H", 2),   3: ("3H", 3),   4: ("4H", 4),
-    5: ("5H", 5),   6: ("6H", 6),   7: ("7H", 7),   8: ("8H", 8),
-    9: ("9H", 9),   10: ("10H", 10), 11: ("JH", 10),
-    12: ("QH", 10), 13: ("KH", 10),
+    1: ("AH", 1),
+    2: ("2H", 2),
+    3: ("3H", 3),
+    4: ("4H", 4),
+    5: ("5H", 5),
+    6: ("6H", 6),
+    7: ("7H", 7),
+    8: ("8H", 8),
+    9: ("9H", 9),
+    10: ("10H", 10),
+    11: ("JH", 10),
+    12: ("QH", 10),
+    13: ("KH", 10),
 }
 
 
@@ -100,7 +109,7 @@ def main():
                 )
 
         # Draw rectangles for PLAYER (21–22) and DEALER (23–24)
-        for (id1, id2, role_text) in [(21, 22, "PLAYER"), (23, 24, "DEALER")]:
+        for id1, id2, role_text in [(21, 22, "PLAYER"), (23, 24, "DEALER")]:
             if id1 in tag_corners and id2 in tag_corners:
                 # Get cards inside
                 cards_inside = []
@@ -117,7 +126,14 @@ def main():
 
                 color, label_text = get_color_and_label(cards_inside)
 
-                draw_rectangle(frame, tag_corners[id1], tag_corners[id2], label_text, role_text, color)
+                draw_rectangle(
+                    frame,
+                    tag_corners[id1],
+                    tag_corners[id2],
+                    label_text,
+                    role_text,
+                    color,
+                )
 
         cv2.imshow("AprilTag Blackjack", frame)
 
