@@ -1,6 +1,7 @@
 """FSM for a blackjack dealer."""
 
 import itertools
+import queue
 import random
 
 from statemachine import State, StateMachine
@@ -55,22 +56,10 @@ class Dealer(StateMachine):
             cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit)
         )
         self.hand: list[cards.Card] = []
-        self.player_index = 0
+        self.player_queue: queue.SimpleQueue[Player] = queue.SimpleQueue()
+        for p in self.players:
+            self.player_queue.put(p)
         super().__init__()
-
-    def all_players_done(self) -> bool:
-        """Condition to check that all active players are no longer hitting.
-
-        Returns:
-            bool: If all players have finished playing.
-        """
-        all_standing = all(
-            p.last_action == PlayerAction.STAND
-            for p in self.players
-            if p.status == PlayerStatus.ACTIVE
-        )
-        all_busted = all(p.status == PlayerStatus.BUSTED for p in self.players)
-        return all_standing or all_busted
 
     def player_has_blackjack(self) -> bool:
         """Check for any blackjacks.
@@ -93,29 +82,29 @@ class Dealer(StateMachine):
 
     def on_enter_waiting_for_player(self) -> None:
         """Automatically check and transition to done state."""
-        if self.all_players_done():
-            self.resolve_dealer_hand()
-        if self.player_has_blackjack():
-            self.player_blackjack()
+        self.current_player = self.player_queue.get()
+
         if cards.hand_value(self.hand) == BLACKJACK:
             self.dealer_blackjack()
+        if self.player_has_blackjack():
+            self.player_blackjack()
+        if self.player_queue.empty():
+            self.resolve_dealer_hand()
 
     def on_player_hits(self) -> None:
         """Give players a card."""
-        player = self.players[self.player_index]
         card = self.deck.pop()
-        player.hand.append(card)
-        player.last_action = PlayerAction.HIT
-        if cards.hand_value(player.hand) > BLACKJACK:
-            player.status = PlayerStatus.BUSTED
-            player.bet = 0  # TODO: collect chips
-        self.player_index = (self.player_index + 1) % len(self.players)
+        self.current_player.hand.append(card)
+        self.current_player.last_action = PlayerAction.HIT
+        if cards.hand_value(self.current_player.hand) > BLACKJACK:
+            self.current_player.status = PlayerStatus.BUSTED
+            self.current_player.bet = 0  # TODO: collect chips
+        else:
+            self.player_queue.put(self.current_player)
 
     def on_player_stands(self) -> None:
         """Does nothing but updates the player indices and state."""
-        player = self.players[self.player_index]
-        player.last_action = PlayerAction.STAND
-        self.player_index = (self.player_index + 1) % len(self.players)
+        self.current_player.last_action = PlayerAction.STAND
 
     def on_resolve_dealer_hand(self) -> None:
         """Draws to the dealer until 17."""
