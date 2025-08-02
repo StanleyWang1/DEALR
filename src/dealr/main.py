@@ -7,7 +7,7 @@ from pathlib import Path
 
 import tomli
 
-import dealr.blackjack.server as bj_server
+import dealr.blackjack.client as bj_client
 import dealr.card_detector.server as cd_server
 
 
@@ -24,7 +24,7 @@ def main() -> None:
         target=cd_server.serve, args=(args.num_players, ports["card-detector"]), daemon=True
     )
     blackjack_logic = threading.Thread(
-        target=bj_server.serve, args=(args.num_players, ports["card-detector"]), daemon=True
+        target=bj_client.serve, args=(args.num_players, ports["card-detector"]), daemon=True
     )
 
     card_detector_pub.start()

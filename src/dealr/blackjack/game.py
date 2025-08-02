@@ -57,6 +57,7 @@ class Dealer(StateMachine):
         )
         self.hand: list[cards.Card] = []
         self.player_queue: queue.SimpleQueue[Player] = queue.SimpleQueue()
+        self.current_player = None
         for p in self.players:
             self.player_queue.put(p)
         super().__init__()
@@ -82,29 +83,32 @@ class Dealer(StateMachine):
 
     def on_enter_waiting_for_player(self) -> None:
         """Automatically check and transition to done state."""
-        self.current_player = self.player_queue.get()
 
         if cards.hand_value(self.hand) == BLACKJACK:
             self.dealer_blackjack()
-        if self.player_has_blackjack():
+        elif self.player_has_blackjack():
             self.player_blackjack()
-        if self.player_queue.empty():
+        elif self.player_queue.empty():
             self.resolve_dealer_hand()
+        else:
+            self.current_player = self.player_queue.get()
 
     def on_player_hits(self) -> None:
         """Give players a card."""
-        card = self.deck.pop()
-        self.current_player.hand.append(card)
-        self.current_player.last_action = PlayerAction.HIT
-        if cards.hand_value(self.current_player.hand) > BLACKJACK:
-            self.current_player.status = PlayerStatus.BUSTED
-            self.current_player.bet = 0  # TODO: collect chips
-        else:
-            self.player_queue.put(self.current_player)
+        if self.current_player is not None:
+            card = self.deck.pop()
+            self.current_player.hand.append(card)
+            self.current_player.last_action = PlayerAction.HIT
+            if cards.hand_value(self.current_player.hand) > BLACKJACK:
+                self.current_player.status = PlayerStatus.BUSTED
+                self.current_player.bet = 0  # TODO: collect chips
+            else:
+                self.player_queue.put(self.current_player)
 
     def on_player_stands(self) -> None:
         """Does nothing but updates the player indices and state."""
-        self.current_player.last_action = PlayerAction.STAND
+        if self.current_player is not None:
+            self.current_player.last_action = PlayerAction.STAND
 
     def on_resolve_dealer_hand(self) -> None:
         """Draws to the dealer until 17."""
