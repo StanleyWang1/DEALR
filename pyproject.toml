@@ -30,3 +30,6 @@ dev = [
 
 [tool.uv]
 package = true
+
+[project.scripts]
+dealr = "dealr.main:main"
