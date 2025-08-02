@@ -57,7 +57,7 @@ class Dealer(StateMachine):
         )
         self.hand: list[cards.Card] = []
         self.player_queue: queue.SimpleQueue[Player] = queue.SimpleQueue()
-        self.current_player = None
+        self.current_player: Player | None = None
         for p in self.players:
             self.player_queue.put(p)
         super().__init__()

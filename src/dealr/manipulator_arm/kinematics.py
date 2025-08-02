@@ -3,7 +3,7 @@
 import time
 
 import numpy as np
-import sympy as sp  # type: ignore
+import sympy as sp
 
 # -------------------- CONSTANTS --------------------
 L1_CONST = 0.08545  # Link 1 length [m]

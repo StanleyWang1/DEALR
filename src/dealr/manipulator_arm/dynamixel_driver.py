@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from dynamixel_sdk import COMM_SUCCESS, GroupSyncWrite  # type: ignore
+from dynamixel_sdk import COMM_SUCCESS, GroupSyncWrite
 
 from dealr.motor.dynamixel_controller import DynamixelController
 from dealr.manipulator_arm.control_table import (

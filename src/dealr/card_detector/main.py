@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from ultralytics import YOLO  # type: ignore
+from ultralytics import YOLO
 
 
 def main() -> None:

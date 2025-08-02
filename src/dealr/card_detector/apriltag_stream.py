@@ -7,10 +7,14 @@ import numpy as np
 from dealr.blackjack import cards
 
 # Map AprilTag IDs to card names and values
-CARD_MAP = dict(enumerate(cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit)))
+CARD_MAP = dict(
+    enumerate(cards.Card(*args) for args in itertools.product(cards.Rank, cards.Suit))
+)
 
 
-def get_color_and_label(cards_detected: list[cards.Card]):
+def get_color_and_label(
+    cards_detected: list[cards.Card],
+) -> tuple[tuple[int, int, int], str]:
     if not cards_detected:
         return (0, 255, 255), "None"  # Yellow when no cards
     total = cards.hand_value(cards_detected)
@@ -19,7 +23,14 @@ def get_color_and_label(cards_detected: list[cards.Card]):
     return color, label
 
 
-def draw_rectangle(frame, corners1, corners2, label_text, role_text, color):
+def draw_rectangle(
+    frame,
+    corners1,
+    corners2,
+    label_text: str,
+    role_text: str,
+    color: tuple[int, int, int],
+) -> tuple[int, int, int, int]:
     # Compute bounds
     x_min = int(min(corners1[:, 0].min(), corners2[:, 0].min()))
     x_max = int(max(corners1[:, 0].max(), corners2[:, 0].max()))
@@ -56,7 +67,7 @@ def draw_rectangle(frame, corners1, corners2, label_text, role_text, color):
     return x_min, x_max, y_min, y_max
 
 
-def main():
+def main() -> None:
     cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         print("❌ Error: Could not open camera.")

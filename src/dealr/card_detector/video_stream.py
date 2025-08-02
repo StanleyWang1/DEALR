@@ -5,7 +5,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pupil_apriltags as apriltag
-from ultralytics import YOLO  # type: ignore
+from ultralytics import YOLO
 
 
 def detect_apriltags(frame_queue: mp.Queue, tag_queue: mp.Queue) -> None:

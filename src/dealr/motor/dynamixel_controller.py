@@ -2,7 +2,7 @@
 
 import logging
 
-from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler  # type: ignore
+from dynamixel_sdk import COMM_SUCCESS, PacketHandler, PortHandler
 
 
 class DynamixelController:

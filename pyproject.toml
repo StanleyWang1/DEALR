@@ -28,6 +28,15 @@ dev = [
     "ruff>=0.12.5",
 ]
 
+[[tool.mypy.overrides]]
+module = [
+    "dynamixel_sdk.*",
+    "sympy.*",
+    "ultralytics.*",
+    "pupil_apriltags.*"
+]
+ignore_missing_imports = true
+
 [tool.pylint.typecheck]
 generated-members = "cv2.*"
 
