@@ -1,0 +1,47 @@
+[project]
+name = "dealr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "colorama>=0.4.6",
+    "dynamixel-controller>=0.9.2",
+    "dynamixel-sdk>=3.7.31",
+    "onnx>=1.18.0",
+    "onnxslim>=0.1.61",
+    "opencv-python>=4.11.0.86",
+    "pupil-apriltags>=1.0.4.post11",
+    "pygame>=2.6.1",
+    "python-statemachine[diagrams]>=2.5.0",
+    "pyzmq>=27.0.0",
+    "sympy>=1.14.0",
+    "tomli>=2.2.1",
+    "types-colorama>=0.4.15.20240311",
+    "ultralytics>=8.3.170",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.5",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "dynamixel_sdk.*",
+    "sympy.*",
+    "ultralytics.*",
+    "pupil_apriltags.*"
+]
+ignore_missing_imports = true
+
+[tool.pylint.typecheck]
+generated-members = "cv2.*"
+
+[tool.uv]
+package = true
+
+[project.scripts]
+dealr = "dealr.main:main"
